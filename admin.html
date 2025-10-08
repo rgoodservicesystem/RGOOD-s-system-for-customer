@@ -24,12 +24,13 @@
   .h{font-weight:700; margin:6px 0 10px}
   .muted{color:var(--muted); font-size:12px}
   .log{white-space:pre-wrap; background:#071223; padding:8px; border-radius:8px; border:1px dashed #20314a; font-size:12px}
+  /* modal */
   #pinModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9999}
 </style>
 </head>
 <body>
 
-<!-- การ์ดล็อกอินทีมงาน -->
+<!-- ชั้นที่ 1: การ์ดล็อกอินทีมงาน -->
 <div class="card" id="authCard" style="max-width:1200px; margin:16px auto 0">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
     <div><strong>เข้าสู่ระบบทีมงาน</strong> <span class="muted">อนุญาตเฉพาะ Admin/Staff</span></div>
@@ -38,13 +39,12 @@
       <input id="password" type="password" placeholder="รหัสผ่าน">
       <button id="btnSignIn">เข้าสู่ระบบ</button>
       <button id="btnSignOut" style="display:none">ออกจากระบบ</button>
-      <button id="btnPing" class="outline" style="background:#071a29;color:#aaf3ff;border:1px solid #10343a">ทดสอบการเชื่อมต่อ</button>
     </div>
   </div>
   <div class="muted" id="authMsg"></div>
 </div>
 
-<!-- Modal PIN -->
+<!-- ชั้นที่ 2: Modal Admin PIN -->
 <div id="pinModal">
   <div class="card" style="width:min(420px,90vw)">
     <div class="row"><strong>ใส่รหัสผ่านหน้าแอดมิน (Admin PIN)</strong></div>
@@ -52,7 +52,7 @@
       <input id="adminPin" type="password" placeholder="PIN 6 หลัก">
       <button id="btnVerifyPin">ยืนยัน</button>
     </div>
-    <div class="muted">* จะถาม PIN หนึ่งครั้งต่อ session ของเบราว์เซอร์</div>
+    <div class="muted">* เพื่อความปลอดภัย จะถาม PIN หนึ่งครั้งต่อ session ของเบราว์เซอร์</div>
     <div class="muted" id="pinMsg"></div>
     <div class="row" style="margin-top:8px">
       <button id="btnSetPin" title="เฉพาะผู้ใช้ role admin">ตั้ง/เปลี่ยน PIN (เฉพาะ Admin)</button>
@@ -89,6 +89,7 @@
         <input id="projDue" type="date">
         <button id="btnAddProject">+ โปรเจ็กต์</button>
       </div>
+
       <div class="list" id="list"></div>
     </div>
 
@@ -133,7 +134,7 @@
 
       <div class="h" style="margin-top:16px">รายการผลิตภัณฑ์/ทะเบียน</div>
 
-      <!-- ตัวกรอง -->
+      <!-- แถวตัวกรองค้นหา -->
       <div class="row" style="gap:8px">
         <input id="itSearch" placeholder="ค้นหา: ชื่อการค้า/ชื่อสามัญ/ทะเบียน/เลขรับ" style="flex:1">
         <select id="itFilterStatus">
@@ -176,11 +177,11 @@
 </div> <!-- /#mainWrap -->
 
 <script>
-/* ===== Supabase Config ===== */
+/* ===== Config (ฝังคีย์จริง) ===== */
 const SUPABASE_URL = 'https://jlrogimfjmtwdqiuyejj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impscm9naW1mam10d2RxaXV5ZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NDIyODUsImV4cCI6MjA3NTUxODI4NX0.OvX7qgcIF5aCcLebUEUR_6D2KTUP2pALCjRtHWJ5qZg';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+  auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false }
 });
 
 /* ===== Helpers ===== */
@@ -188,75 +189,136 @@ let selectedProject = null;
 const el = id => document.getElementById(id);
 const log = (...a) => { const t = el('log'); if(!t) return; t.textContent = [new Date().toLocaleString(), ...a].join(' | ') + "\n" + t.textContent; };
 function msg(id, text){ const n=document.getElementById(id); if(n) n.textContent=text||''; }
-function withTimeout(promise, ms=10000){ return Promise.race([promise,new Promise((_,r)=>setTimeout(()=>r(new Error('TIMEOUT')),ms))]); }
+function toggleMain(show){ el('mainWrap').style.display = show ? 'block':'none'; }
 
-/* ===== Auth & PIN ===== */
+/* ===== Auth flow ===== */
 async function signIn(){
   const email = (el('email').value || '').trim();
   const password = (el('password').value || '');
   const btn = el('btnSignIn');
   if(!email || !password){ msg('authMsg','กรอกอีเมลและรหัสผ่าน'); return; }
+
   try{
-    msg('authMsg','กำลังเข้าสู่ระบบ…'); btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ…';
-    const { data, error } = await withTimeout(sb.auth.signInWithPassword({ email, password }), 10000);
-    if(error){ msg('authMsg', `เข้าสู่ระบบไม่สำเร็จ: ${error.message}${error.status?` (HTTP ${error.status})`:''}`); console.error(error); return; }
+    msg('authMsg','กำลังเข้าสู่ระบบ…');
+    btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ…';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){
+      msg('authMsg', 'เข้าสู่ระบบไม่สำเร็จ: ' + error.message + (error.status ? ` (HTTP ${error.status})` : ''));
+      console.error('signIn error:', error);
+      return;
+    }
     msg('authMsg','เข้าสู่ระบบสำเร็จ');
   }catch(e){
-    if(e.message==='TIMEOUT'){ msg('authMsg','เชื่อมต่อ Supabase ไม่สำเร็จ (อาจเป็น CORS/โดเมนไม่ได้อนุญาต)'); }
-    else { msg('authMsg','เกิดข้อผิดพลาด: '+e.message); }
-    console.error('signIn exception', e);
+    msg('authMsg','เกิดข้อผิดพลาด: ' + e.message);
+    console.error('signIn exception:', e);
   }finally{
     btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
   }
 }
-async function signOut(){ await sb.auth.signOut(); sessionStorage.removeItem('adminPinOk'); location.reload(); }
-function toggleMain(show){ el('mainWrap').style.display = show ? 'block' : 'none'; }
-async function ensureAdminPin(){ if(sessionStorage.getItem('adminPinOk')==='1') return true; el('pinModal').style.display='flex'; return false; }
-async function verifyPin(){
-  const pin = el('adminPin').value;
-  if(!pin){ msg('pinMsg','ใส่ PIN ก่อน'); return; }
-  const { data, error } = await sb.rpc('verify_admin_pin', { p_pin: pin });
-  if(error){ msg('pinMsg','ตรวจ PIN ไม่สำเร็จ: '+error.message); return; }
-  if(!data){ msg('pinMsg','PIN ไม่ถูกต้อง'); return; }
-  sessionStorage.setItem('adminPinOk','1'); el('pinModal').style.display='none'; msg('pinMsg',''); await listAll();
+
+async function signOut(){
+  await sb.auth.signOut();
+  sessionStorage.removeItem('adminPinOk');
+  location.reload();
 }
-async function setPin(){
-  const newPin = prompt('ตั้ง/เปลี่ยน Admin PIN (อย่างน้อย 6 หลัก):');
-  if(!newPin) return; if(newPin.length < 6){ alert('PIN ควรมีอย่างน้อย 6 หลัก'); return; }
-  const { error } = await sb.rpc('set_admin_pin', { p_pin: newPin });
-  if(error){ alert('ตั้ง PIN ไม่สำเร็จ: '+error.message); return; }
-  alert('ตั้ง/เปลี่ยน PIN สำเร็จ');
-}
-async function guardAdminStaff(){
-  const { data: s } = await sb.auth.getSession();
-  if(!s.session){ toggleMain(false); msg('authMsg','ยังไม่ได้ล็อกอินทีมงาน'); return false; }
-  const uid = s.session.user.id;
-  const { data, error } = await sb.from('memberships').select('role').eq('user_id', uid).limit(1);
-  if(error){ toggleMain(false); msg('authMsg','ตรวจสิทธิ์ผิดพลาด: '+error.message); return false; }
-  if(!data || data.length===0){ toggleMain(false); msg('authMsg','บัญชีนี้ไม่มีสิทธิ์ทีมงาน'); return false; }
-  const role = data[0].role;
-  if(!(role==='admin' || role==='staff')){ toggleMain(false); msg('authMsg','หน้านี้สำหรับทีมงานเท่านั้น'); return false; }
-  const okPin = await ensureAdminPin(); toggleMain(okPin); return okPin;
-}
+
 async function afterAuth(){
   try{
     const { data: s, error } = await sb.auth.getSession();
     if(error){ msg('authMsg','อ่าน session ไม่สำเร็จ: '+error.message); console.error(error); return; }
+
     const signedIn = !!s.session;
     el('btnSignIn').style.display = signedIn ? 'none' : '';
     el('btnSignOut').style.display = signedIn ? '' : 'none';
     msg('authMsg', signedIn ? 'เข้าสู่ระบบแล้ว' : 'กรอกอีเมลและรหัสผ่าน');
-    if(signedIn){ await guardAdminStaff(); } else { toggleMain(false); }
-  }catch(e){ msg('authMsg','afterAuth ผิดพลาด: '+e.message); console.error(e); }
+
+    if(signedIn){
+      const ok = await guardAdminStaff(); // ตรวจ role + PIN
+      toggleMain(ok);
+      if(ok){ await listAll(); }
+    }else{
+      toggleMain(false);
+    }
+  }catch(e){
+    msg('authMsg','afterAuth ผิดพลาด: ' + e.message);
+    console.error('afterAuth exception:', e);
+  }
 }
 
-/* ===== Core Admin ===== */
+/* ===== Role check + Admin PIN ===== */
+async function ensureAdminPin(){
+  if(sessionStorage.getItem('adminPinOk') === '1'){ return true; }
+  el('pinModal').style.display = 'flex';
+  return false;
+}
+
+async function verifyPin(){
+  const pin = (el('adminPin').value || '').trim();
+  if(!pin){ msg('pinMsg','ใส่ PIN ก่อน'); return; }
+  const { data, error } = await sb.rpc('verify_admin_pin', { p_pin: pin });
+  if(error){ msg('pinMsg','ตรวจ PIN ไม่สำเร็จ: ' + error.message); return; }
+  if(!data){ msg('pinMsg','PIN ไม่ถูกต้อง'); return; }
+  sessionStorage.setItem('adminPinOk','1');
+  el('pinModal').style.display = 'none';
+  msg('pinMsg','');
+  await listAll();
+}
+
+async function setPin(){
+  const newPin = prompt('ตั้ง/เปลี่ยน Admin PIN (อย่างน้อย 6 หลัก):');
+  if(!newPin) return;
+  if(newPin.length < 6){ alert('PIN ควรมีอย่างน้อย 6 หลัก'); return; }
+  const { error } = await sb.rpc('set_admin_pin', { p_pin: newPin });
+  if(error){ alert('ตั้ง PIN ไม่สำเร็จ: ' + error.message); return; }
+  alert('ตั้ง/เปลี่ยน PIN เรียบร้อย');
+}
+
+async function guardAdminStaff(){
+  const { data: s } = await sb.auth.getSession();
+  if(!s.session){
+    toggleMain(false);
+    msg('authMsg','ยังไม่ได้ล็อกอินทีมงาน');
+    return false;
+  }
+  const uid = s.session.user.id;
+
+  // ดู role จาก memberships (RLS จะให้เห็นเฉพาะของตัวเอง)
+  const { data, error } = await sb
+    .from('memberships')
+    .select('role')
+    .eq('user_id', uid)
+    .limit(1);
+
+  if(error){
+    msg('authMsg','ตรวจสิทธิ์ผิดพลาด: ' + error.message);
+    toggleMain(false);
+    return false;
+  }
+  if(!data || data.length === 0){
+    msg('authMsg','บัญชีนี้ไม่มีสิทธิ์ทีมงาน');
+    toggleMain(false);
+    return false;
+  }
+  const role = data[0].role;
+  if(!(role === 'admin' || role === 'staff')){
+    msg('authMsg','หน้านี้สำหรับทีมงานเท่านั้น');
+    toggleMain(false);
+    return false;
+  }
+
+  // ผ่าน role แล้ว → ตรวจ PIN
+  const okPin = await ensureAdminPin();
+  return okPin;
+}
+
+/* ===== Core Admin Functions ===== */
 async function listAll() {
   const q = el('search').value?.trim()?.toLowerCase();
   let { data: rows, error } = await sb
     .from('projects')
     .select('id,title,status,due_date,company_id,companies:company_id(name,code)')
     .order('created_at', { ascending:false });
+
   if(error){ log('โหลดโปรเจ็กต์ผิดพลาด', error.message); return; }
   if(q){
     rows = rows.filter(r =>
@@ -275,43 +337,272 @@ async function listAll() {
     list.appendChild(div);
   });
 }
-function paintProject(p){ selectedProject = p; el('pStatus').textContent = p.status; el('pDue').textContent = p.due_date || '-'; el('pCompany').textContent = p.companies?.name || '-'; el('updStatus').value = p.status; }
-async function selectProject(p){ document.querySelectorAll('.item').forEach(i=>i.classList.remove('active')); const list = el('list'); const idx = Array.from(list.children).findIndex(n => n.textContent.includes(p.title)); if(idx>=0) list.children[idx].classList.add('active'); paintProject(p); await loadTimeline(); await loadMessages(); await loadDocs(); await loadItems(); }
-async function addCompany(){ const name = el('companyName').value.trim(); const code = el('companyCode').value.trim(); if(!name || !code) return log('กรอกชื่อ/รหัสบริษัท'); const { data, error } = await sb.from('companies').insert({ name, code }).select().maybeSingle(); if(error) return log('เพิ่มบริษัทผิดพลาด', error.message); el('companyName').value=''; el('companyCode').value=''; log('เพิ่มบริษัทแล้ว', data?.name); await listAll(); }
-async function addProject(){ const title = el('projTitle').value.trim(); const status = el('projStatus').value; const due = el('projDue').value || null; const { data: firstCo } = await sb.from('companies').select('id,name').order('created_at').limit(1).maybeSingle(); if(!firstCo) return log('ยังไม่มีบริษัท ให้สร้างก่อน'); const { data: pj, error } = await sb.from('projects').insert({ company_id: firstCo.id, title, status, due_date: due }).select('id,title,status,due_date,company_id,companies:company_id(name,code)').maybeSingle(); if(error) return log('เพิ่มโปรเจ็กต์ผิดพลาด', error.message); el('projTitle').value=''; el('projDue').value=''; log('เพิ่มโปรเจ็กต์แล้ว', pj?.title); await listAll(); await selectProject(pj); }
-async function updateStatus(){ if(!selectedProject) return; const status = el('updStatus').value; const { error } = await sb.from('projects').update({ status }).eq('id', selectedProject.id); if(error) return log('อัปเดตสถานะผิดพลาด', error.message); selectedProject.status = status; paintProject(selectedProject); await sb.from('timeline').insert({ project_id: selectedProject.id, step: `อัปเดตสถานะ: ${status}`, note: null }); await loadTimeline(); log('อัปเดตสถานะสำเร็จ'); }
-async function addTimeline(){ if(!selectedProject) return; const step = el('tlStep').value.trim(); const note = el('tlNote').value.trim() || null; if(!step) return log('ระบุข้อความขั้นตอน'); const { error } = await sb.from('timeline').insert({ project_id: selectedProject.id, step, note }); if(error) return log('เพิ่มไทม์ไลน์ผิดพลาด', error.message); el('tlStep').value=''; el('tlNote').value=''; await loadTimeline(); log('เพิ่มไทม์ไลน์แล้ว'); }
-async function loadTimeline(){ if(!selectedProject) return; const { data, error } = await sb.from('timeline').select('id,step,note,created_at').eq('project_id', selectedProject.id).order('created_at',{ascending:false}); if(error) return log('โหลดไทม์ไลน์ผิดพลาด', error.message); el('timeline').innerHTML = (data||[]).map(x=>`<div class="item"><div><strong>${x.step}</strong></div><div class="muted">${new Date(x.created_at).toLocaleString()}</div>${x.note? `<div class="muted">${x.note}</div>`:''}</div>`).join(''); }
-async function addMsg(){ if(!selectedProject) return; const body = el('msgBody').value.trim(); if(!body) return log('พิมพ์ข้อความก่อน'); const { error } = await sb.from('messages').insert({ project_id: selectedProject.id, body, by_role: 'staff' }); if(error) return log('โพสต์ข้อความผิดพลาด', error.message); el('msgBody').value=''; await loadMessages(); log('โพสต์แล้ว'); }
-async function loadMessages(){ if(!selectedProject) return; const { data, error } = await sb.from('messages').select('id,body,by_role,created_at').eq('project_id', selectedProject.id).order('created_at',{ascending:false}); if(error) return log('โหลดข้อความผิดพลาด', error.message); el('messages').innerHTML = (data||[]).map(x=>`<div class="item"><div><strong>[${x.by_role}]</strong> ${x.body}</div><div class="muted">${new Date(x.created_at).toLocaleString()}</div></div>`).join(''); }
-async function uploadDoc(){ if(!selectedProject) return; const f = el('docFile').files[0]; if(!f) return log('เลือกไฟล์ก่อน'); const label = el('docLabel').value.trim() || f.name; const path = `${selectedProject.id}/${Date.now()}_${f.name}`; const { error: e1 } = await sb.storage.from('docs').upload(path, f, { upsert:false }); if(e1) return log('อัปโหลดไฟล์ผิดพลาด', e1.message); const { error: e2 } = await sb.from('documents').insert({ project_id: selectedProject.id, file_path: path, label }); if(e2) return log('บันทึกไฟล์ผิดพลาด', e2.message); el('docFile').value=''; el('docLabel').value=''; await loadDocs(); log('อัปโหลดแล้ว'); }
-async function loadDocs(){ if(!selectedProject) return; const { data, error } = await sb.from('documents').select('id,label,file_path,created_at').eq('project_id', selectedProject.id).order('created_at',{ascending:false}); if(error) return log('โหลดไฟล์ผิดพลาด', error.message); const html = await Promise.all((data||[]).map(async d=>{ const { data: signed } = await sb.storage.from('docs').createSignedUrl(d.file_path, 600); return `<div class="item"><div><strong>${d.label||'ไฟล์'}</strong></div><div class="muted">${new Date(d.created_at).toLocaleString()}</div><div class="row"><a href="${signed?.signedUrl||'#'}" target="_blank">เปิดไฟล์</a></div></div>`; })); el('docs').innerHTML = html.join(''); }
-/* Items */
-async function addItem(){ if(!selectedProject) return; const payload = { project_id: selectedProject.id, trade_name: el('itTrade').value.trim() || null, common_name: el('itCommon').value.trim() || null, reg_no: el('itReg').value.trim() || null, receipt_no: el('itReceipt').value.trim() || null, status_step: el('itStep').value || null, admin_note: el('itAdminNote').value.trim() || null, blocker: false, blocker_note: null }; const { error } = await sb.from('product_items').insert(payload); if(error) return log('เพิ่มรายการผลิตภัณฑ์ผิดพลาด', error.message); ['itTrade','itCommon','itReg','itReceipt','itAdminNote'].forEach(id=>el(id).value=''); await loadItems(); log('เพิ่มรายการผลิตภัณฑ์แล้ว'); }
-async function editItem(id){ const { data: cur } = await sb.from('product_items').select('*').eq('id', id).maybeSingle(); if(!cur) return log('ไม่พบบรรทัด'); const trade = prompt('ชื่อการค้า', cur.trade_name ?? '') ?? cur.trade_name; const common = prompt('ชื่อสามัญ', cur.common_name ?? '') ?? cur.common_name; const reg = prompt('ทะเบียน', cur.reg_no ?? '') ?? cur.reg_no; const rcpt = prompt('เลขรับ', cur.receipt_no ?? '') ?? cur.receipt_no; const step = prompt('ขั้นตอน (waiting_docs/precheck/submitted/pending_result/done/rejected)', cur.status_step ?? '') ?? cur.status_step; const anote = prompt('หมายเหตุ (ฝั่งเรา)', cur.admin_note ?? '') ?? cur.admin_note; const blocker = confirm('ติ๊ก "ตกลง" หากรายการนี้มีปัญหา (blocker)') ? true : false; const bnote = blocker ? (prompt('ระบุปัญหา/สิ่งที่ค้าง', cur.blocker_note ?? '') ?? cur.blocker_note) : null; const { error } = await sb.from('product_items').update({ trade_name: trade || null, common_name: common || null, reg_no: reg || null, receipt_no: rcpt || null, status_step: step || null, admin_note: anote || null, blocker, blocker_note: bnote }).eq('id', id); if(error) return log('แก้ไขรายการผลิตภัณฑ์ผิดพลาด', error.message); await loadItems(); log('แก้ไขรายการผลิตภัณฑ์แล้ว'); }
-async function delItem(id){ if(!confirm('ลบรายการนี้ใช่ไหม?')) return; const { error } = await sb.from('product_items').delete().eq('id', id); if(error) return log('ลบรายการผลิตภัณฑ์ผิดพลาด', error.message); await loadItems(); log('ลบรายการผลิตภัณฑ์แล้ว'); }
-async function loadItems(){ if(!selectedProject) return; const kw = (el('itSearch').value || '').trim().toLowerCase(); const status = el('itFilterStatus').value || ''; const onlyBlocker = el('itOnlyBlocker').checked; const { data, error } = await sb.from('product_items').select('id,trade_name,common_name,reg_no,receipt_no,status_step,admin_note,client_note,blocker,blocker_note,updated_at').eq('project_id', selectedProject.id).order('created_at',{ascending:false}); if(error){ log('โหลดรายการผลิตภัณฑ์ผิดพลาด', error.message); return; } let rows = data || []; if(kw){ rows = rows.filter(x=>{ const s = [x.trade_name,x.common_name,x.reg_no,x.receipt_no,x.admin_note,x.client_note,x.blocker_note].filter(Boolean).join(' ').toLowerCase(); return s.includes(kw); }); } if(status) rows = rows.filter(x => (x.status_step||'') === status); if(onlyBlocker) rows = rows.filter(x => x.blocker); el('items').innerHTML = rows.map(x=>`<div class="item"><div><strong>${x.trade_name||'-'}</strong> <span class="muted">(${x.common_name||'-'})</span></div><div class="muted">ทะเบียน: ${x.reg_no||'-'} • เลขรับ: ${x.receipt_no||'-'} • ขั้น: ${x.status_step||'-'}</div><div class="muted">ปัญหา: ${x.blocker ? 'มี' : 'ไม่มี'} ${x.blocker && x.blocker_note ? '— '+x.blocker_note : ''}</div><div class="muted">หมายเหตุเรา: ${x.admin_note||'-'} | หมายเหตุลูกค้า: ${x.client_note||'-'}</div><div class="muted">อัปเดตล่าสุด: ${new Date(x.updated_at).toLocaleString()}</div><div class="row" style="margin-top:6px; gap:6px"><button onclick="editItem('${x.id}')">แก้ไข</button><button onclick="delItem('${x.id}')">ลบ</button></div></div>`).join(''); }
 
-/* ===== Bindings ===== */
+function paintProject(p){
+  selectedProject = p;
+  el('pStatus').textContent = p.status;
+  el('pDue').textContent = p.due_date || '-';
+  el('pCompany').textContent = p.companies?.name || '-';
+  el('updStatus').value = p.status;
+}
+
+async function selectProject(p) {
+  document.querySelectorAll('.item').forEach(i=>i.classList.remove('active'));
+  const list = el('list'); const idx = Array.from(list.children).findIndex(n => n.textContent.includes(p.title));
+  if(idx>=0) list.children[idx].classList.add('active');
+
+  paintProject(p);
+  await loadTimeline();
+  await loadMessages();
+  await loadDocs();
+  await loadItems();
+}
+
+async function addCompany(){
+  const name = el('companyName').value.trim();
+  const code = el('companyCode').value.trim();
+  if(!name || !code) return log('กรอกชื่อ/รหัสบริษัท');
+  const { data, error } = await sb.from('companies').insert({ name, code }).select().maybeSingle();
+  if(error) return log('เพิ่มบริษัทผิดพลาด', error.message);
+  el('companyName').value=''; el('companyCode').value='';
+  log('เพิ่มบริษัทแล้ว', data?.name);
+  await listAll();
+}
+
+async function addProject(){
+  const title = el('projTitle').value.trim();
+  const status = el('projStatus').value;
+  const due = el('projDue').value || null;
+
+  // เลือกบริษัทแรกที่ผู้ใช้มี membership (กัน RLS ไม่เห็นบริษัทคนอื่น)
+  const { data: co } = await sb
+    .from('companies')
+    .select('id,name')
+    .order('created_at')
+    .limit(1)
+    .maybeSingle();
+  if(!co){ return log('ยังไม่มีบริษัทในสิทธิ์ของคุณ ให้สร้างบริษัทก่อน'); }
+
+  const { data: pj, error } = await sb.from('projects').insert({
+    company_id: co.id, title, status, due_date: due
+  }).select('id,title,status,due_date,company_id,companies:company_id(name,code)').maybeSingle();
+
+  if(error) return log('เพิ่มโปรเจ็กต์ผิดพลาด', error.message);
+  el('projTitle').value=''; el('projDue').value='';
+  log('เพิ่มโปรเจ็กต์แล้ว', pj?.title);
+  await listAll();
+  await selectProject(pj);
+}
+
+async function updateStatus(){
+  if(!selectedProject) return;
+  const status = el('updStatus').value;
+  const { error } = await sb.from('projects').update({ status }).eq('id', selectedProject.id);
+  if(error) return log('อัปเดตสถานะผิดพลาด', error.message);
+  selectedProject.status = status;
+  paintProject(selectedProject);
+  await sb.from('timeline').insert({ project_id: selectedProject.id, step: `อัปเดตสถานะ: ${status}`, note: null });
+  await loadTimeline();
+  log('อัปเดตสถานะสำเร็จ');
+}
+
+async function addTimeline(){
+  if(!selectedProject) return;
+  const step = el('tlStep').value.trim();
+  const note = el('tlNote').value.trim() || null;
+  if(!step) return log('ระบุข้อความขั้นตอน');
+  const { error } = await sb.from('timeline').insert({ project_id: selectedProject.id, step, note });
+  if(error) return log('เพิ่มไทม์ไลน์ผิดพลาด', error.message);
+  el('tlStep').value=''; el('tlNote').value='';
+  await loadTimeline();
+  log('เพิ่มไทม์ไลน์แล้ว');
+}
+
+async function loadTimeline(){
+  if(!selectedProject) return;
+  const { data, error } = await sb.from('timeline')
+    .select('id,step,note,created_at')
+    .eq('project_id', selectedProject.id)
+    .order('created_at',{ascending:false});
+  if(error) return log('โหลดไทม์ไลน์ผิดพลาด', error.message);
+  el('timeline').innerHTML = (data||[]).map(x=>`
+    <div class="item">
+      <div><strong>${x.step}</strong></div>
+      <div class="muted">${new Date(x.created_at).toLocaleString()}</div>
+      ${x.note? `<div class="muted">${x.note}</div>`:''}
+    </div>
+  `).join('');
+}
+
+async function addMsg(){
+  if(!selectedProject) return;
+  const body = el('msgBody').value.trim();
+  if(!body) return log('พิมพ์ข้อความก่อน');
+  const { error } = await sb.from('messages').insert({
+    project_id: selectedProject.id, body, by_role: 'staff'
+  });
+  if(error) return log('โพสต์ข้อความผิดพลาด', error.message);
+  el('msgBody').value='';
+  await loadMessages();
+  log('โพสต์แล้ว');
+}
+
+async function loadMessages(){
+  if(!selectedProject) return;
+  const { data, error } = await sb.from('messages')
+    .select('id,body,by_role,created_at')
+    .eq('project_id', selectedProject.id)
+    .order('created_at',{ascending:false});
+  if(error) return log('โหลดข้อความผิดพลาด', error.message);
+  el('messages').innerHTML = (data||[]).map(x=>`
+    <div class="item">
+      <div><strong>[${x.by_role}]</strong> ${x.body}</div>
+      <div class="muted">${new Date(x.created_at).toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+async function uploadDoc(){
+  if(!selectedProject) return;
+  const f = el('docFile').files[0];
+  if(!f) return log('เลือกไฟล์ก่อน');
+  const label = el('docLabel').value.trim() || f.name;
+  const path = `${selectedProject.id}/${Date.now()}_${f.name}`;
+  const { error: e1 } = await sb.storage.from('docs').upload(path, f, { upsert:false });
+  if(e1) return log('อัปโหลดไฟล์ผิดพลาด', e1.message);
+  const { error: e2 } = await sb.from('documents').insert({ project_id: selectedProject.id, file_path: path, label });
+  if(e2) return log('บันทึกไฟล์ผิดพลาด', e2.message);
+  el('docFile').value=''; el('docLabel').value='';
+  await loadDocs();
+  log('อัปโหลดแล้ว');
+}
+
+async function loadDocs(){
+  if(!selectedProject) return;
+  const { data, error } = await sb.from('documents')
+    .select('id,label,file_path,created_at')
+    .eq('project_id', selectedProject.id)
+    .order('created_at',{ascending:false});
+  if(error) return log('โหลดไฟล์ผิดพลาด', error.message);
+
+  const html = await Promise.all((data||[]).map(async d=>{
+    const { data: signed } = await sb.storage.from('docs').createSignedUrl(d.file_path, 60*10);
+    return `<div class="item">
+      <div><strong>${d.label||'ไฟล์'}</strong></div>
+      <div class="muted">${new Date(d.created_at).toLocaleString()}</div>
+      <div class="row"><a href="${signed?.signedUrl||'#'}" target="_blank">เปิดไฟล์</a></div>
+    </div>`;
+  }));
+  el('docs').innerHTML = html.join('');
+}
+
+/* ===== Product Items: ค้น/กรอง + CRUD ===== */
+async function addItem(){
+  if(!selectedProject) return;
+  const payload = {
+    project_id: selectedProject.id,
+    trade_name: el('itTrade').value.trim() || null,
+    common_name: el('itCommon').value.trim() || null,
+    reg_no: el('itReg').value.trim() || null,
+    receipt_no: el('itReceipt').value.trim() || null,
+    status_step: el('itStep').value || null,
+    admin_note: el('itAdminNote').value.trim() || null,
+    blocker: false,
+    blocker_note: null
+  };
+  const { error } = await sb.from('product_items').insert(payload);
+  if(error) return log('เพิ่มรายการผลิตภัณฑ์ผิดพลาด', error.message);
+  ['itTrade','itCommon','itReg','itReceipt','itAdminNote'].forEach(id=>el(id).value='');
+  await loadItems();
+  log('เพิ่มรายการผลิตภัณฑ์แล้ว');
+}
+
+async function editItem(id){
+  const { data: cur } = await sb.from('product_items').select('*').eq('id', id).maybeSingle();
+  if(!cur) return log('ไม่พบบรรทัด');
+  const trade = prompt('ชื่อการค้า', cur.trade_name ?? '') ?? cur.trade_name;
+  const common = prompt('ชื่อสามัญ', cur.common_name ?? '') ?? cur.common_name;
+  const reg = prompt('ทะเบียน', cur.reg_no ?? '') ?? cur.reg_no;
+  const rcpt = prompt('เลขรับ', cur.receipt_no ?? '') ?? cur.receipt_no;
+  const step = prompt('ขั้นตอน (waiting_docs/precheck/submitted/pending_result/done/rejected)', cur.status_step ?? '') ?? cur.status_step;
+  const anote = prompt('หมายเหตุ (ฝั่งเรา)', cur.admin_note ?? '') ?? cur.admin_note;
+  const blocker = confirm('ติ๊ก "ตกลง" หากรายการนี้มีปัญหา (blocker)') ? true : false;
+  const bnote = blocker ? (prompt('ระบุปัญหา/สิ่งที่ค้าง', cur.blocker_note ?? '') ?? cur.blocker_note) : null;
+
+  const { error } = await sb.from('product_items').update({
+    trade_name: trade || null,
+    common_name: common || null,
+    reg_no: reg || null,
+    receipt_no: rcpt || null,
+    status_step: step || null,
+    admin_note: anote || null,
+    blocker,
+    blocker_note: bnote
+  }).eq('id', id);
+
+  if(error) return log('แก้ไขรายการผลิตภัณฑ์ผิดพลาด', error.message);
+  await loadItems();
+  log('แก้ไขรายการผลิตภัณฑ์แล้ว');
+}
+
+async function delItem(id){
+  if(!confirm('ลบรายการนี้ใช่ไหม?')) return;
+  const { error } = await sb.from('product_items').delete().eq('id', id);
+  if(error) return log('ลบรายการผลิตภัณฑ์ผิดพลาด', error.message);
+  await loadItems();
+  log('ลบรายการผลิตภัณฑ์แล้ว');
+}
+
+async function loadItems(){
+  if(!selectedProject) return;
+  const kw = (el('itSearch').value || '').trim().toLowerCase();
+  const status = el('itFilterStatus').value || '';
+  const onlyBlocker = el('itOnlyBlocker').checked;
+
+  const { data, error } = await sb
+    .from('product_items')
+    .select('id,trade_name,common_name,reg_no,receipt_no,status_step,admin_note,client_note,blocker,blocker_note,updated_at')
+    .eq('project_id', selectedProject.id)
+    .order('created_at',{ascending:false});
+  if(error){ log('โหลดรายการผลิตภัณฑ์ผิดพลาด', error.message); return; }
+
+  let rows = data || [];
+  if(kw){
+    rows = rows.filter(x=>{
+      const s = [x.trade_name,x.common_name,x.reg_no,x.receipt_no,x.admin_note,x.client_note,x.blocker_note]
+        .filter(Boolean).join(' ').toLowerCase();
+      return s.includes(kw);
+    });
+  }
+  if(status) rows = rows.filter(x => (x.status_step||'') === status);
+  if(onlyBlocker) rows = rows.filter(x => x.blocker);
+
+  el('items').innerHTML = rows.map(x=>`
+    <div class="item">
+      <div><strong>${x.trade_name||'-'}</strong> <span class="muted">(${x.common_name||'-'})</span></div>
+      <div class="muted">ทะเบียน: ${x.reg_no||'-'} • เลขรับ: ${x.receipt_no||'-'} • ขั้น: ${x.status_step||'-'}</div>
+      <div class="muted">ปัญหา: ${x.blocker ? 'มี' : 'ไม่มี'} ${x.blocker && x.blocker_note ? '— '+x.blocker_note : ''}</div>
+      <div class="muted">หมายเหตุเรา: ${x.admin_note||'-'} | หมายเหตุลูกค้า: ${x.client_note||'-'}</div>
+      <div class="muted">อัปเดตล่าสุด: ${new Date(x.updated_at).toLocaleString()}</div>
+      <div class="row" style="margin-top:6px; gap:6px">
+        <button onclick="editItem('${x.id}')">แก้ไข</button>
+        <button onclick="delItem('${x.id}')">ลบ</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ===== Bindings & Realtime ===== */
 document.addEventListener('DOMContentLoaded', async ()=>{
+  // ปุ่มล็อกอิน/ออก
   el('btnSignIn').onclick = signIn;
   el('btnSignOut').onclick = signOut;
+
+  // PIN
   el('btnVerifyPin').onclick = verifyPin;
   el('btnSetPin').onclick = setPin;
-  el('btnPing').onclick = async ()=>{
-    msg('authMsg','กำลังทดสอบการเชื่อมต่อ…');
-    try{
-      const { error } = await withTimeout(sb.from('companies').select('id').limit(1), 8000);
-      if(error) msg('authMsg','REST เชื่อมต่อได้ แต่มี error: '+error.message);
-      else msg('authMsg','เชื่อมต่อ API ได้ปกติ ✅');
-    }catch(e){
-      msg('authMsg', e.message==='TIMEOUT' ? 'เชื่อมต่อไม่ได้/หมดเวลา ⏳ (ตรวจ CORS & URL ใน Supabase)' : 'ทดสอบล้มเหลว: '+e.message);
-    }
-  };
 
-  sb.auth.onAuthStateChange(afterAuth);
-  await afterAuth();
-
+  // ปุ่มอื่น ๆ
   el('btnRefresh').onclick = listAll;
   el('btnAddCompany').onclick = addCompany;
   el('btnAddProject').onclick = addProject;
@@ -321,13 +612,28 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   el('btnUpload').onclick = uploadDoc;
   el('btnAddItem').onclick = addItem;
   el('search').oninput = listAll;
-  ['itSearch','itFilterStatus','itOnlyBlocker'].forEach(id=>{ const n = el(id); if(n) n.oninput = loadItems; });
+  ['itSearch','itFilterStatus','itOnlyBlocker'].forEach(id=>{
+    const n = el(id); if(n) n.oninput = loadItems;
+  });
 
+  // auth state
+  sb.auth.onAuthStateChange(afterAuth);
+  await afterAuth();
+
+  // realtime
   sb.channel('rt-admin')
-    .on('postgres_changes', { event:'*', schema:'public', table:'timeline' }, payload => { if(selectedProject && payload.new.project_id === selectedProject.id){ loadTimeline(); }})
-    .on('postgres_changes', { event:'*', schema:'public', table:'messages' }, payload => { if(selectedProject && payload.new.project_id === selectedProject.id){ loadMessages(); }})
-    .on('postgres_changes', { event:'*', schema:'public', table:'documents' }, payload => { if(selectedProject && payload.new.project_id === selectedProject.id){ loadDocs(); }})
-    .on('postgres_changes', { event:'*', schema:'public', table:'product_items' }, payload => { if(selectedProject && payload.new.project_id === selectedProject.id){ loadItems(); }})
+    .on('postgres_changes', { event:'*', schema:'public', table:'timeline' }, payload => {
+      if(selectedProject && payload.new.project_id === selectedProject.id){ loadTimeline(); }
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'messages' }, payload => {
+      if(selectedProject && payload.new.project_id === selectedProject.id){ loadMessages(); }
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'documents' }, payload => {
+      if(selectedProject && payload.new.project_id === selectedProject.id){ loadDocs(); }
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'product_items' }, payload => {
+      if(selectedProject && payload.new.project_id === selectedProject.id){ loadItems(); }
+    })
     .subscribe();
 });
 </script>
