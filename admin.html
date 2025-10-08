@@ -187,98 +187,57 @@ let selectedProject = null;
 const el = id => document.getElementById(id);
 const log = (...a) => { const t = el('log'); if(!t) return; t.textContent = [new Date().toLocaleString(), ...a].join(' | ') + "\n" + t.textContent; };
 
-/* ===== Auth & PIN (ชั้นความปลอดภัย) ===== */
-function msg(id, text){ const n = document.getElementById(id); if(n) n.textContent = text || ''; }
+// helper แสดงข้อความใต้ฟอร์ม (ถ้ายังไม่มี)
+function msg(id, text){ const n=document.getElementById(id); if(n) n.textContent=text||''; }
 
 async function signIn(){
-  const email = el('email').value.trim();
-  const password = el('password').value;
-  if(!email || !password){ return msg('authMsg','กรอกอีเมลและรหัสผ่าน'); }
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ return msg('authMsg','เข้าสู่ระบบไม่สำเร็จ: ' + error.message); }
-}
+  const email = (document.getElementById('email').value || '').trim();
+  const password = (document.getElementById('password').value || '');
+  const btn = document.getElementById('btnSignIn');
 
-async function signOut(){
-  await sb.auth.signOut();
-  sessionStorage.removeItem('adminPinOk');
-  location.reload();
-}
+  if(!email || !password){ msg('authMsg','กรอกอีเมลและรหัสผ่าน'); return; }
 
-function toggleMain(show){
-  el('mainWrap').style.display = show ? 'block' : 'none';
-}
+  try{
+    msg('authMsg','กำลังเข้าสู่ระบบ…');
+    btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ…';
 
-async function ensureAdminPin(){
-  if(sessionStorage.getItem('adminPinOk') === '1'){ return true; }
-  el('pinModal').style.display = 'flex';
-  return false;
-}
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
-async function verifyPin(){
-  const pin = el('adminPin').value;
-  if(!pin){ return msg('pinMsg','ใส่ PIN ก่อน'); }
-  const { data, error } = await sb.rpc('verify_admin_pin', { p_pin: pin });
-  if(error){ return msg('pinMsg','ตรวจ PIN ไม่สำเร็จ: ' + error.message); }
-  if(!data){ return msg('pinMsg','PIN ไม่ถูกต้อง'); }
-  sessionStorage.setItem('adminPinOk','1');
-  el('pinModal').style.display = 'none';
-  msg('pinMsg','');
-  // PIN ผ่านแล้ว ค่อยโหลดข้อมูล
-  await listAll();
-  return true;
-}
-
-async function setPin(){
-  const newPin = prompt('ตั้ง/เปลี่ยน Admin PIN (อย่างน้อย 6 หลัก):');
-  if(!newPin) return;
-  if(newPin.length < 6){ alert('PIN ควรมีอย่างน้อย 6 หลัก'); return; }
-  const { error } = await sb.rpc('set_admin_pin', { p_pin: newPin });
-  if(error){ alert('ตั้ง PIN ไม่สำเร็จ: ' + error.message); return; }
-  alert('ตั้ง/เปลี่ยน PIN เรียบร้อย');
-}
-
-async function guardAdminStaff() {
-  const { data: s } = await sb.auth.getSession();
-  if(!s.session){
-    toggleMain(false);
-    msg('authMsg','ยังไม่ได้ล็อกอินทีมงาน');
-    return false;
+    if(error){
+      msg('authMsg', 'เข้าสู่ระบบไม่สำเร็จ: ' + (error.message || 'unknown error') + (error.status ? ` (HTTP ${error.status})` : ''));
+      console.error('signIn error:', error);
+      return;
+    }
+    msg('authMsg','เข้าสู่ระบบสำเร็จ'); // onAuthStateChange จะเรียก afterAuth ให้อัตโนมัติ
+  }catch(e){
+    msg('authMsg','เกิดข้อผิดพลาด: ' + e.message);
+    console.error('signIn exception:', e);
+  }finally{
+    btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
   }
-  const uid = s.session.user.id;
-  const { data, error } = await sb
-    .from('memberships')
-    .select('role')
-    .eq('user_id', uid)
-    .limit(1);
-  if(error || !data || data.length===0){
-    toggleMain(false);
-    msg('authMsg','บัญชีนี้ไม่มีสิทธิ์ทีมงาน');
-    return false;
-  }
-  const role = data[0].role;
-  if(!(role === 'admin' || role === 'staff')){
-    toggleMain(false);
-    msg('authMsg','หน้านี้สำหรับทีมงานเท่านั้น');
-    return false;
-  }
-  // ผ่าน role แล้ว → ตรวจ PIN
-  const okPin = await ensureAdminPin();
-  toggleMain(okPin);
-  return okPin;
 }
 
 async function afterAuth(){
-  const { data: s } = await sb.auth.getSession();
-  const signedIn = !!s.session;
-  el('btnSignIn').style.display = signedIn ? 'none' : '';
-  el('btnSignOut').style.display = signedIn ? '' : 'none';
-  if(signedIn){
-    msg('authMsg','เข้าสู่ระบบแล้ว');
-    await guardAdminStaff();
-  } else {
-    toggleMain(false);
+  try{
+    const { data: s, error } = await sb.auth.getSession();
+    if(error){ msg('authMsg','อ่าน session ไม่สำเร็จ: '+error.message); console.error(error); return; }
+
+    const signedIn = !!s.session;
+    document.getElementById('btnSignIn').style.display = signedIn ? 'none' : '';
+    document.getElementById('btnSignOut').style.display = signedIn ? '' : 'none';
+    msg('authMsg', signedIn ? 'เข้าสู่ระบบแล้ว' : 'กรอกอีเมลและรหัสผ่าน');
+
+    if(signedIn){
+      await guardAdminStaff();  // ตรวจสิทธิ์ + เปิด PIN
+    }else{
+      document.getElementById('mainWrap').style.display = 'none';
+    }
+  }catch(e){
+    msg('authMsg','afterAuth ผิดพลาด: ' + e.message);
+    console.error('afterAuth exception:', e);
   }
 }
+
 
 /* ===== Core Admin Functions ===== */
 async function ensureSession() {
