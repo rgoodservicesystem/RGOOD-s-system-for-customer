@@ -521,17 +521,22 @@ async function loadItems(){
 
 /* ===== Bindings & Realtime ===== */
 document.addEventListener('DOMContentLoaded', async ()=>{
-  // ปุ่ม auth & PIN
-  el('btnSignIn').onclick = signIn;
-  el('btnSignOut').onclick = signOut;
+  // ปุ่มล็อกอิน/ออก
+  document.getElementById('btnSignIn').onclick = signIn;
+  document.getElementById('btnSignOut').onclick = async ()=>{
+    await sb.auth.signOut();
+    sessionStorage.removeItem('adminPinOk');
+    location.reload();
+  };
+
+  // ตรวจ state ของ Auth ตลอดเวลา
+  sb.auth.onAuthStateChange(afterAuth);
+  await afterAuth();
+
+  // ปุ่มอื่น ๆ (คงเดิมได้)
   el('btnVerifyPin').onclick = verifyPin;
   el('btnSetPin').onclick = setPin;
 
-  // auth state
-  sb.auth.onAuthStateChange(afterAuth);
-  await afterAuth(); // จะเรียก guardAdminStaff ภายในถ้าล็อกอินแล้ว
-
-  // กดปุ่มต่าง ๆ
   el('btnRefresh').onclick = listAll;
   el('btnAddCompany').onclick = addCompany;
   el('btnAddProject').onclick = addProject;
@@ -546,7 +551,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     const n = el(id); if(n) n.oninput = loadItems;
   });
 
-  // realtime subscribe
   sb.channel('rt-admin')
     .on('postgres_changes', { event:'*', schema:'public', table:'timeline' }, payload => {
       if(selectedProject && payload.new.project_id === selectedProject.id){ loadTimeline(); }
@@ -562,6 +566,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     })
     .subscribe();
 });
+
 </script>
 </body>
 </html>
