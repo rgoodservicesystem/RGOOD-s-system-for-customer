@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>R. GOOD SERVICE REGISTRATION — Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --bg:#0f172a; --card:#0e1628; --ink:#e5e7eb; --muted:#94a3b8;
-    --border:#1f2937; --accent:#22d3ee;
-  }
+  :root { --bg:#0f172a; --card:#0e1628; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --accent:#22d3ee; }
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--ink);font-family:'Prompt',system-ui;text-align:center;overflow:hidden}
   .wrap{max-width:900px;margin:40px auto;padding:20px;}
@@ -23,25 +21,18 @@
   .btn:hover{filter:brightness(1.1);}
   .outline{background:#071a29;color:#aaf3ff;border:1px solid #10343a;}
   .footer{margin-top:28px;color:var(--muted);font-size:13px;}
-  @media (max-width:600px){
-    img.logo{width:80px;}
-    h1{font-size:18px;}
-  }
-  /* splash */
-  #splash {
-    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-    flex-direction:column;background:#0b1224;z-index:9999;transition:opacity .8s ease;
-  }
-  #splash img {width:120px;border-radius:12px;animation:spin 4s linear infinite;}
-  #splash h2 {color:#e5e7eb;margin-top:12px;font-weight:600;}
-  @keyframes spin {from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  @media (max-width:600px){ img.logo{width:80px;} h1{font-size:18px;} }
+  #splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#0b1224;z-index:9999;transition:opacity .8s ease;}
+  #splash img{width:120px;border-radius:12px;animation:spin 4s linear infinite;}
+  #splash h2{color:#e5e7eb;margin-top:12px;font-weight:600;}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<!-- splash screen -->
+<!-- splash -->
 <div id="splash">
   <img src="https://i.ibb.co/J1KDprF/image.jpg" alt="logo">
-  <h2>กำลังตรวจสอบสิทธิ์เข้าสู่ระบบ...</h2>
+  <h2 id="splashMsg">กำลังตรวจสอบสิทธิ์เข้าสู่ระบบ...</h2>
 </div>
 
 <div class="wrap" id="main" style="display:none;">
@@ -57,9 +48,10 @@
     </div>
     <div class="row">
       <button class="btn" onclick="goClient()">เข้าสู่ระบบลูกค้า</button>
-      <button class="btn outline" onclick="location.href='admin.html'">เข้าสู่ระบบทีมงาน</button>
+      <button class="btn outline" onclick="location.href='admin.html?nocache=1'">เข้าสู่ระบบทีมงาน</button>
+      <button id="btnPing" class="btn outline">ทดสอบการเชื่อมต่อ</button>
     </div>
-    <div class="muted" style="margin-top:8px">* ระบบลูกค้าจะใช้ข้อมูลข้างต้นเพื่อเชื่อมไปหน้า client.html</div>
+    <div class="muted" id="pingMsg" style="margin-top:8px">* ปุ่มทดสอบจะเช็กว่าหน้านี้คุยกับ Supabase ได้ไหม</div>
   </div>
 
   <div class="footer">
@@ -69,6 +61,7 @@
 </div>
 
 <script>
+/* nav ไปหน้า client */
 function goClient(){
   const co=(document.getElementById('co').value||'').trim();
   const lid=(document.getElementById('lid').value||'').trim();
@@ -79,14 +72,34 @@ function goClient(){
 }
 document.getElementById('yy').textContent=new Date().getFullYear();
 
-// splash fade out
+/* splash fade */
 window.addEventListener('load', ()=>{
   setTimeout(()=>{
     const sp=document.getElementById('splash');
     sp.style.opacity='0';
     setTimeout(()=>{sp.remove();document.getElementById('main').style.display='block';},800);
-  },2000); // splash 2 วินาที
+  },1200);
 });
+
+/* ---- ปุ่มทดสอบการเชื่อมต่อ Supabase ---- */
+const SUPABASE_URL='https://jlrogimfjmtwdqiuyejj.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impscm9naW1mam10d2RxaXV5ZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NDIyODUsImV4cCI6MjA3NTUxODI4NX0.OvX7qgcIF5aCcLebUEUR_6D2KTUP2pALCjRtHWJ5qZg';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+});
+function msg(id, t){ const n=document.getElementById(id); if(n) n.textContent=t||''; }
+function withTimeout(p,ms=8000){ return Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('TIMEOUT')),ms))]); }
+
+document.getElementById('btnPing').onclick = async ()=>{
+  msg('pingMsg','กำลังทดสอบ…');
+  try{
+    const { error } = await withTimeout(sb.from('companies').select('id').limit(1), 8000);
+    if(error) msg('pingMsg','เชื่อมต่อได้แต่มี error: '+error.message);
+    else msg('pingMsg','เชื่อมต่อ API ได้ปกติ ✅');
+  }catch(e){
+    msg('pingMsg', e.message==='TIMEOUT' ? 'เชื่อมต่อไม่ได้/หมดเวลา ⏳ (ตั้งค่า CORS/URL ใน Supabase ให้รวม rgoodservicesystem.github.io)' : 'ล้มเหลว: '+e.message);
+  }
+};
 </script>
 </body>
 </html>
