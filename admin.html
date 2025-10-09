@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Admin — Tracking & Diary</title>
 
-<!-- ใช้ UMD build เพื่อให้ window.supabase มีแน่ -->
+<!-- UMD build เพื่อให้ window.supabase มีแน่ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
@@ -29,6 +29,9 @@
   .log{white-space:pre-wrap; background:#071223; padding:8px; border-radius:8px; border:1px dashed #20314a; font-size:12px}
   /* modal */
   #pinModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9999}
+  /* header whoami */
+  .who{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .who .tag{font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;background:#0b1224}
 </style>
 </head>
 <body>
@@ -66,7 +69,14 @@
 <!-- เนื้อหาแอดมินหลัก -->
 <div id="mainWrap" style="display:none">
 <div class="wrap">
-  <h2>Admin — ระบบติดตามงานขึ้นทะเบียน (Tracking + Diary)</h2>
+  <div class="who">
+    <h2 style="margin:0">Admin — ระบบติดตามงานขึ้นทะเบียน (Tracking + Diary)</h2>
+    <span class="tag" id="whoEmail">—</span>
+    <span class="tag" id="whoRole">role: —</span>
+    <span class="tag" id="whoLast">—</span>
+    <button id="btnSignOut2" style="margin-left:auto">ออกจากระบบ</button>
+  </div>
+
   <div class="grid">
     <div class="card">
       <div class="h">บริษัท & โปรเจ็กต์</div>
@@ -189,7 +199,6 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let selectedProject = null;
 const el = id => document.getElementById(id);
 const log = (...a) => { const t = el('log'); if(!t) return; t.textContent = [new Date().toLocaleString(), ...a].join(' | ') + "\n" + t.textContent; };
-// escape ช่วยใส่ค่าใน value/HTML ให้ปลอดภัย
 const esc = (s)=> (s ?? '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
 function msg(id, text){ const n=document.getElementById(id); if(n) n.textContent=text||''; }
@@ -214,9 +223,36 @@ async function signOut(){
   sessionStorage.removeItem('adminPinOk');
   location.reload();
 }
-
 function toggleMain(show){ el('mainWrap').style.display = show ? 'block' : 'none'; }
 
+/* ===== แสดงผู้ใช้/สิทธิ์บนหัวหน้า ===== */
+async function getCurrentRole(uid){
+  try{
+    const { data, error } = await sb.from('memberships').select('role').eq('user_id', uid).limit(1);
+    if(error || !data || !data.length) return null;
+    return data[0].role || null;
+  }catch{ return null; }
+}
+async function updateWhoami(){
+  const whoEmail = el('whoEmail');
+  const whoRole  = el('whoRole');
+  const whoLast  = el('whoLast');
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user){
+    whoEmail.textContent = '—';
+    whoRole.textContent  = 'role: —';
+    whoLast.textContent  = '—';
+    return;
+  }
+  const role = await getCurrentRole(user.id);
+  whoEmail.textContent = user.email || '—';
+  whoRole.textContent  = 'role: ' + (role || '—');
+  // last_sign_in_at อาจไม่มีในบางเคส
+  const last = user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : '—';
+  whoLast.textContent  = 'เข้าสู่ระบบล่าสุด: ' + last;
+}
+
+/* ===== PIN ===== */
 async function ensureAdminPin(){
   if(sessionStorage.getItem('adminPinOk') === '1'){ return true; }
   el('pinModal').style.display = 'flex';
@@ -243,6 +279,7 @@ async function setPin(){
   alert('ตั้ง/เปลี่ยน PIN เรียบร้อย');
 }
 
+/* ===== Gate: เฉพาะ admin/staff ===== */
 async function guardAdminStaff() {
   const { data: s } = await sb.auth.getSession();
   if(!s.session){
@@ -261,7 +298,8 @@ async function guardAdminStaff() {
   if(!(role === 'admin' || role === 'staff')){
     toggleMain(false); msg('authMsg','หน้านี้สำหรับทีมงานเท่านั้น'); return false;
   }
-  const okPin = await ensureAdminPin();
+  await updateWhoami();        // อัปเดตหัวข้อผู้ใช้
+  const okPin = await ensureAdminPin(); // ถาม PIN
   toggleMain(okPin);
   return okPin;
 }
@@ -616,12 +654,17 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // ปุ่ม auth & PIN
   el('btnSignIn').onclick = signIn;
   el('btnSignOut').onclick = signOut;
+  el('btnSignOut2').onclick = signOut;
   el('btnVerifyPin').onclick = verifyPin;
   el('btnSetPin').onclick = setPin;
 
   // auth state
-  sb.auth.onAuthStateChange(afterAuth);
-  await afterAuth(); // จะเรียก guardAdminStaff ภายในถ้าล็อกอินแล้ว
+  sb.auth.onAuthStateChange(async ()=>{
+    await updateWhoami();
+    await afterAuth(); // จะเรียก guardAdminStaff ภายในถ้าล็อกอินแล้ว
+  });
+  await updateWhoami();
+  await afterAuth();
 
   // ปุ่มอื่น ๆ
   el('btnRefresh').onclick = listAll;
