@@ -5,33 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>R. GOOD SERVICE REGISTRATION — Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{--bg:#0f172a;--card:#0e1628;--ink:#e5e7eb;--muted:#94a3b8;--border:#1f2937;--accent:#22d3ee}
-  *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--ink);font-family:'Prompt',system-ui;text-align:center}
-  .wrap{max-width:900px;margin:40px auto;padding:20px}
-  img.logo{width:120px;border-radius:12px;margin-bottom:10px;box-shadow:0 0 20px rgba(255,255,255,.15)}
-  .card{background:#0e1628;border:1px solid var(--border);border-radius:18px;padding:22px;margin-top:24px}
-  .row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px}
-  input{border-radius:10px;border:1px solid var(--border);background:#071326;color:#e5e7eb;padding:10px 14px}
-  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#042a30;border:none;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}
-  .outline{background:#071a29;color:#aaf3ff;border:1px solid #10343a}
-  .muted{color:var(--muted);font-size:14px}
+  :root {
+    --bg:#0f172a; --card:#0e1628; --ink:#e5e7eb; --muted:#94a3b8;
+    --border:#1f2937; --accent:#22d3ee;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--ink);font-family:'Prompt',system-ui;text-align:center;overflow:hidden}
+  .wrap{max-width:900px;margin:40px auto;padding:20px;}
+  img.logo{width:120px;height:auto;border-radius:12px;margin-bottom:10px;box-shadow:0 0 20px rgba(255,255,255,.15);}
+  h1{font-size:22px;margin:8px 0 4px 0;}
+  .muted{color:var(--muted);font-size:14px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-top:24px;box-shadow:0 10px 25px rgba(0,0,0,.2);}
+  .row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px;}
+  input{border-radius:10px;border:1px solid var(--border);background:#071326;color:var(--ink);padding:10px 14px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#042a30;border:none;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;}
+  .btn:hover{filter:brightness(1.1);}
+  .outline{background:#071a29;color:#aaf3ff;border:1px solid #10343a;}
+  .footer{margin-top:28px;color:var(--muted);font-size:13px;}
+  @media (max-width:600px){
+    img.logo{width:86px;}
+    h1{font-size:18px;}
+  }
+  /* splash */
+  #splash {
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;background:#0b1224;z-index:9999;transition:opacity .8s ease;
+  }
+  #splash img {width:120px;border-radius:12px;animation:spin 4s linear infinite;}
+  #splash h2 {color:#e5e7eb;margin-top:12px;font-weight:600;}
+  @keyframes spin {from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <img src="https://i.ibb.co/J1KDprF/image.jpg" class="logo" alt="logo">
-  <h2>บริษัท อาร์. กู้ด เซอร์วิส รีจิสเตรชั่น จำกัด</h2>
+<!-- splash screen -->
+<div id="splash">
+  <img src="https://i.ibb.co/J1KDprF/image.jpg" alt="logo">
+  <h2>กำลังตรวจสอบสิทธิ์เข้าสู่ระบบ...</h2>
+</div>
+
+<div class="wrap" id="main" style="display:none;">
+  <img src="https://i.ibb.co/J1KDprF/image.jpg" alt="R. Good Service Logo" class="logo"/>
+  <h1>บริษัท อาร์. กู้ด เซอร์วิส รีจิสเตรชั่น จำกัด</h1>
   <div class="muted">R. GOOD SERVICE REGISTRATION CO., LTD.</div>
 
   <div class="card">
-    <h3>เลือกหน้าใช้งาน</h3>
+    <h2>เลือกหน้าใช้งาน</h2>
     <div class="row">
-      <button class="btn" onclick="location.href='client.html'">เข้าสู่ระบบลูกค้า (ดูอย่างเดียว)</button>
-      <button class="btn outline" onclick="location.href='admin.html'">เข้าสู่ระบบทีมงาน</button>
+      <input id="co" placeholder="รหัสบริษัท (เช่น RGD001)">
+      <input id="lid" placeholder="Login ID (ถ้ามี)">
+    </div>
+    <div class="row">
+      <button class="btn" id="goClient">เข้าสู่ระบบลูกค้า</button>
+      <button class="btn outline" id="goAdmin">เข้าสู่ระบบทีมงาน</button>
+    </div>
+    <div class="muted" style="margin-top:8px">
+      * ระบบลูกค้าใช้รหัสบริษัทเพื่อแสดงข้อมูลเฉพาะของบริษัทคุณ
     </div>
   </div>
+
+  <div class="footer">
+    <div>ติดต่อ LINE OA: <a href="https://line.me/R/ti/p/@991cyisb" target="_blank">@991cyisb</a></div>
+    <div>© <span id="yy"></span> R. GOOD SERVICE REGISTRATION</div>
+  </div>
 </div>
+
+<script>
+  // ปุ่มไปลูกค้า/แอดมิน
+  document.getElementById('goClient').addEventListener('click', ()=>{
+    const co=(document.getElementById('co').value||'').trim();
+    const lid=(document.getElementById('lid').value||'').trim();
+    const params=new URLSearchParams();
+    if(co) params.set('company', co);
+    if(lid) params.set('login', lid);
+    location.href='client.html' + (params.toString()?('?'+params.toString()):'');
+  });
+  document.getElementById('goAdmin').addEventListener('click', ()=>{
+    location.href='admin.html';
+  });
+
+  // ปีลิขสิทธิ์
+  document.getElementById('yy').textContent=new Date().getFullYear();
+
+  // splash fade out
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      const sp=document.getElementById('splash');
+      sp.style.opacity='0';
+      setTimeout(()=>{
+        sp.remove();
+        document.getElementById('main').style.display='block';
+      },800);
+    },1600);
+  });
+</script>
 </body>
 </html>
