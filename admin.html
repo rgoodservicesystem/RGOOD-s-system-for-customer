@@ -4,8 +4,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Admin — Tracking & Diary</title>
+
+<!-- ใช้ UMD build เพื่อให้ window.supabase มีแน่ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{ --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --border:#1f2937; --accent:#22d3ee; --ok:#10b981; --warn:#f59e0b; --err:#ef4444; }
   *{box-sizing:border-box}
@@ -114,7 +117,7 @@
       </div>
 
       <div class="h">ไทม์ไลน์</div>
-      <div class="row"><input id="tlStep" placeholder="ข้อความขั้นตอน เช่น “ยื่น อย. เลขรับ 012/68”" style="flex:1"></div>
+      <div class="row"><input id="tlStep" placeholder='ข้อความขั้นตอน เช่น “ยื่น อย. เลขรับ 012/68”' style="flex:1"></div>
       <div class="row"><textarea id="tlNote" rows="3" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)" style="flex:1"></textarea></div>
       <div class="row"><button id="btnAddTimeline">+ เพิ่มไทม์ไลน์</button></div>
       <div id="timeline"></div>
@@ -134,7 +137,7 @@
 
       <div class="h" style="margin-top:16px">รายการผลิตภัณฑ์/ทะเบียน</div>
 
-      <!-- แถวตัวกรองค้นหา -->
+      <!-- ตัวกรองค้นหา -->
       <div class="row" style="gap:8px">
         <input id="itSearch" placeholder="ค้นหา: ชื่อการค้า/ชื่อสามัญ/ทะเบียน/เลขรับ" style="flex:1">
         <select id="itFilterStatus">
@@ -177,43 +180,33 @@
 </div> <!-- /#mainWrap -->
 
 <script>
-/* ===== Config (ฝังคีย์จริง) ===== */
+/* ===== Config (ใช้โปรเจ็กต์ของคุณ) ===== */
 const SUPABASE_URL = 'https://jlrogimfjmtwdqiuyejj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impscm9naW1mam10d2RxaXV5ZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NDIyODUsImV4cCI6MjA3NTUxODI4NX0.OvX7qgcIF5aCcLebUEUR_6D2KTUP2pALCjRtHWJ5qZg';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false }
-});
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ===== Helpers ===== */
 let selectedProject = null;
 const el = id => document.getElementById(id);
 const log = (...a) => { const t = el('log'); if(!t) return; t.textContent = [new Date().toLocaleString(), ...a].join(' | ') + "\n" + t.textContent; };
-function msg(id, text){ const n=document.getElementById(id); if(n) n.textContent=text||''; }
-function toggleMain(show){ el('mainWrap').style.display = show ? 'block':'none'; }
+// escape ช่วยใส่ค่าใน value/HTML ให้ปลอดภัย
+const esc = (s)=> (s ?? '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
-/* ===== Auth flow ===== */
+function msg(id, text){ const n=document.getElementById(id); if(n) n.textContent=text||''; }
+
+/* ===== Auth & PIN ===== */
 async function signIn(){
   const email = (el('email').value || '').trim();
   const password = (el('password').value || '');
   const btn = el('btnSignIn');
   if(!email || !password){ msg('authMsg','กรอกอีเมลและรหัสผ่าน'); return; }
-
   try{
-    msg('authMsg','กำลังเข้าสู่ระบบ…');
-    btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ…';
+    msg('authMsg','กำลังเข้าสู่ระบบ…'); btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ…';
     const { error } = await sb.auth.signInWithPassword({ email, password });
-    if(error){
-      msg('authMsg', 'เข้าสู่ระบบไม่สำเร็จ: ' + error.message + (error.status ? ` (HTTP ${error.status})` : ''));
-      console.error('signIn error:', error);
-      return;
-    }
+    if(error){ msg('authMsg','เข้าสู่ระบบไม่สำเร็จ: ' + error.message); return; }
     msg('authMsg','เข้าสู่ระบบสำเร็จ');
-  }catch(e){
-    msg('authMsg','เกิดข้อผิดพลาด: ' + e.message);
-    console.error('signIn exception:', e);
-  }finally{
-    btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
-  }
+  }catch(e){ msg('authMsg','เกิดข้อผิดพลาด: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ'; }
 }
 
 async function signOut(){
@@ -222,48 +215,25 @@ async function signOut(){
   location.reload();
 }
 
-async function afterAuth(){
-  try{
-    const { data: s, error } = await sb.auth.getSession();
-    if(error){ msg('authMsg','อ่าน session ไม่สำเร็จ: '+error.message); console.error(error); return; }
+function toggleMain(show){ el('mainWrap').style.display = show ? 'block' : 'none'; }
 
-    const signedIn = !!s.session;
-    el('btnSignIn').style.display = signedIn ? 'none' : '';
-    el('btnSignOut').style.display = signedIn ? '' : 'none';
-    msg('authMsg', signedIn ? 'เข้าสู่ระบบแล้ว' : 'กรอกอีเมลและรหัสผ่าน');
-
-    if(signedIn){
-      const ok = await guardAdminStaff(); // ตรวจ role + PIN
-      toggleMain(ok);
-      if(ok){ await listAll(); }
-    }else{
-      toggleMain(false);
-    }
-  }catch(e){
-    msg('authMsg','afterAuth ผิดพลาด: ' + e.message);
-    console.error('afterAuth exception:', e);
-  }
-}
-
-/* ===== Role check + Admin PIN ===== */
 async function ensureAdminPin(){
   if(sessionStorage.getItem('adminPinOk') === '1'){ return true; }
   el('pinModal').style.display = 'flex';
   return false;
 }
-
 async function verifyPin(){
-  const pin = (el('adminPin').value || '').trim();
-  if(!pin){ msg('pinMsg','ใส่ PIN ก่อน'); return; }
+  const pin = el('adminPin').value;
+  if(!pin){ return msg('pinMsg','ใส่ PIN ก่อน'); }
   const { data, error } = await sb.rpc('verify_admin_pin', { p_pin: pin });
-  if(error){ msg('pinMsg','ตรวจ PIN ไม่สำเร็จ: ' + error.message); return; }
-  if(!data){ msg('pinMsg','PIN ไม่ถูกต้อง'); return; }
+  if(error){ return msg('pinMsg','ตรวจ PIN ไม่สำเร็จ: ' + error.message); }
+  if(!data){ return msg('pinMsg','PIN ไม่ถูกต้อง'); }
   sessionStorage.setItem('adminPinOk','1');
   el('pinModal').style.display = 'none';
   msg('pinMsg','');
   await listAll();
+  return true;
 }
-
 async function setPin(){
   const newPin = prompt('ตั้ง/เปลี่ยน Admin PIN (อย่างน้อย 6 หลัก):');
   if(!newPin) return;
@@ -273,45 +243,42 @@ async function setPin(){
   alert('ตั้ง/เปลี่ยน PIN เรียบร้อย');
 }
 
-async function guardAdminStaff(){
+async function guardAdminStaff() {
   const { data: s } = await sb.auth.getSession();
   if(!s.session){
-    toggleMain(false);
-    msg('authMsg','ยังไม่ได้ล็อกอินทีมงาน');
-    return false;
+    toggleMain(false); msg('authMsg','ยังไม่ได้ล็อกอินทีมงาน'); return false;
   }
   const uid = s.session.user.id;
-
-  // ดู role จาก memberships (RLS จะให้เห็นเฉพาะของตัวเอง)
   const { data, error } = await sb
     .from('memberships')
     .select('role')
     .eq('user_id', uid)
     .limit(1);
-
-  if(error){
-    msg('authMsg','ตรวจสิทธิ์ผิดพลาด: ' + error.message);
-    toggleMain(false);
-    return false;
-  }
-  if(!data || data.length === 0){
-    msg('authMsg','บัญชีนี้ไม่มีสิทธิ์ทีมงาน');
-    toggleMain(false);
-    return false;
+  if(error || !data || data.length===0){
+    toggleMain(false); msg('authMsg','บัญชีนี้ไม่มีสิทธิ์ทีมงาน'); return false;
   }
   const role = data[0].role;
   if(!(role === 'admin' || role === 'staff')){
-    msg('authMsg','หน้านี้สำหรับทีมงานเท่านั้น');
-    toggleMain(false);
-    return false;
+    toggleMain(false); msg('authMsg','หน้านี้สำหรับทีมงานเท่านั้น'); return false;
   }
-
-  // ผ่าน role แล้ว → ตรวจ PIN
   const okPin = await ensureAdminPin();
+  toggleMain(okPin);
   return okPin;
 }
 
-/* ===== Core Admin Functions ===== */
+async function afterAuth(){
+  try{
+    const { data: s, error } = await sb.auth.getSession();
+    if(error){ msg('authMsg','อ่าน session ไม่สำเร็จ: '+error.message); return; }
+    const signedIn = !!s.session;
+    el('btnSignIn').style.display = signedIn ? 'none' : '';
+    el('btnSignOut').style.display = signedIn ? '' : 'none';
+    msg('authMsg', signedIn ? 'เข้าสู่ระบบแล้ว' : 'กรอกอีเมลและรหัสผ่าน');
+    if(signedIn){ await guardAdminStaff(); } else { toggleMain(false); }
+  }catch(e){ msg('authMsg','afterAuth ผิดพลาด: ' + e.message); }
+}
+
+/* ===== Core Admin ===== */
 async function listAll() {
   const q = el('search').value?.trim()?.toLowerCase();
   let { data: rows, error } = await sb
@@ -321,8 +288,8 @@ async function listAll() {
 
   if(error){ log('โหลดโปรเจ็กต์ผิดพลาด', error.message); return; }
   if(q){
-    rows = rows.filter(r =>
-      r.title.toLowerCase().includes(q) ||
+    rows = (rows||[]).filter(r =>
+      (r.title||'').toLowerCase().includes(q) ||
       (r.companies?.name||'').toLowerCase().includes(q) ||
       (r.companies?.code||'').toLowerCase().includes(q)
     );
@@ -331,8 +298,8 @@ async function listAll() {
   (rows||[]).forEach(r=>{
     const div = document.createElement('div');
     div.className = 'item';
-    div.innerHTML = `<div><strong>${r.title}</strong></div>
-      <div class="muted">${r.companies?.name || '-'} • สถานะ: ${r.status} • กำหนด: ${r.due_date||'-'}</div>`;
+    div.innerHTML = `<div><strong>${esc(r.title||'-')}</strong></div>
+      <div class="muted">${esc(r.companies?.name || '-')} • สถานะ: ${esc(r.status||'-')} • กำหนด: ${esc(r.due_date||'-')}</div>`;
     div.onclick = ()=>selectProject(r);
     list.appendChild(div);
   });
@@ -340,10 +307,10 @@ async function listAll() {
 
 function paintProject(p){
   selectedProject = p;
-  el('pStatus').textContent = p.status;
+  el('pStatus').textContent = p.status || '-';
   el('pDue').textContent = p.due_date || '-';
   el('pCompany').textContent = p.companies?.name || '-';
-  el('updStatus').value = p.status;
+  el('updStatus').value = p.status || 'waiting_docs';
 }
 
 async function selectProject(p) {
@@ -374,17 +341,11 @@ async function addProject(){
   const status = el('projStatus').value;
   const due = el('projDue').value || null;
 
-  // เลือกบริษัทแรกที่ผู้ใช้มี membership (กัน RLS ไม่เห็นบริษัทคนอื่น)
-  const { data: co } = await sb
-    .from('companies')
-    .select('id,name')
-    .order('created_at')
-    .limit(1)
-    .maybeSingle();
-  if(!co){ return log('ยังไม่มีบริษัทในสิทธิ์ของคุณ ให้สร้างบริษัทก่อน'); }
+  const { data: firstCo } = await sb.from('companies').select('id,name').order('created_at').limit(1).maybeSingle();
+  if(!firstCo) return log('ยังไม่มีบริษัท ให้สร้างก่อน');
 
   const { data: pj, error } = await sb.from('projects').insert({
-    company_id: co.id, title, status, due_date: due
+    company_id: firstCo.id, title, status, due_date: due
   }).select('id,title,status,due_date,company_id,companies:company_id(name,code)').maybeSingle();
 
   if(error) return log('เพิ่มโปรเจ็กต์ผิดพลาด', error.message);
@@ -406,6 +367,7 @@ async function updateStatus(){
   log('อัปเดตสถานะสำเร็จ');
 }
 
+/* ===== Timeline / Messages / Docs ===== */
 async function addTimeline(){
   if(!selectedProject) return;
   const step = el('tlStep').value.trim();
@@ -427,9 +389,9 @@ async function loadTimeline(){
   if(error) return log('โหลดไทม์ไลน์ผิดพลาด', error.message);
   el('timeline').innerHTML = (data||[]).map(x=>`
     <div class="item">
-      <div><strong>${x.step}</strong></div>
+      <div><strong>${esc(x.step||'')}</strong></div>
       <div class="muted">${new Date(x.created_at).toLocaleString()}</div>
-      ${x.note? `<div class="muted">${x.note}</div>`:''}
+      ${x.note? `<div class="muted">${esc(x.note)}</div>`:''}
     </div>
   `).join('');
 }
@@ -456,7 +418,7 @@ async function loadMessages(){
   if(error) return log('โหลดข้อความผิดพลาด', error.message);
   el('messages').innerHTML = (data||[]).map(x=>`
     <div class="item">
-      <div><strong>[${x.by_role}]</strong> ${x.body}</div>
+      <div><strong>[${esc(x.by_role)}]</strong> ${esc(x.body||'')}</div>
       <div class="muted">${new Date(x.created_at).toLocaleString()}</div>
     </div>
   `).join('');
@@ -488,7 +450,7 @@ async function loadDocs(){
   const html = await Promise.all((data||[]).map(async d=>{
     const { data: signed } = await sb.storage.from('docs').createSignedUrl(d.file_path, 60*10);
     return `<div class="item">
-      <div><strong>${d.label||'ไฟล์'}</strong></div>
+      <div><strong>${esc(d.label||'ไฟล์')}</strong></div>
       <div class="muted">${new Date(d.created_at).toLocaleString()}</div>
       <div class="row"><a href="${signed?.signedUrl||'#'}" target="_blank">เปิดไฟล์</a></div>
     </div>`;
@@ -496,7 +458,7 @@ async function loadDocs(){
   el('docs').innerHTML = html.join('');
 }
 
-/* ===== Product Items: ค้น/กรอง + CRUD ===== */
+/* ===== Product Items: เพิ่ม/ค้น/อินไลน์แก้ไข/บันทึก/ลบ ===== */
 async function addItem(){
   if(!selectedProject) return;
   const payload = {
@@ -517,32 +479,35 @@ async function addItem(){
   log('เพิ่มรายการผลิตภัณฑ์แล้ว');
 }
 
-async function editItem(id){
-  const { data: cur } = await sb.from('product_items').select('*').eq('id', id).maybeSingle();
-  if(!cur) return log('ไม่พบบรรทัด');
-  const trade = prompt('ชื่อการค้า', cur.trade_name ?? '') ?? cur.trade_name;
-  const common = prompt('ชื่อสามัญ', cur.common_name ?? '') ?? cur.common_name;
-  const reg = prompt('ทะเบียน', cur.reg_no ?? '') ?? cur.reg_no;
-  const rcpt = prompt('เลขรับ', cur.receipt_no ?? '') ?? cur.receipt_no;
-  const step = prompt('ขั้นตอน (waiting_docs/precheck/submitted/pending_result/done/rejected)', cur.status_step ?? '') ?? cur.status_step;
-  const anote = prompt('หมายเหตุ (ฝั่งเรา)', cur.admin_note ?? '') ?? cur.admin_note;
-  const blocker = confirm('ติ๊ก "ตกลง" หากรายการนี้มีปัญหา (blocker)') ? true : false;
-  const bnote = blocker ? (prompt('ระบุปัญหา/สิ่งที่ค้าง', cur.blocker_note ?? '') ?? cur.blocker_note) : null;
+async function saveItem(id){
+  const trade = el('t_'+id).value.trim() || null;
+  const common = el('c_'+id).value.trim() || null;
+  const reg = el('r_'+id).value.trim() || null;
+  const rcpt = el('rc_'+id).value.trim() || null;
+  const step = el('s_'+id).value || null;
+  const subm = el('sub_'+id).value || null; // YYYY-MM-DD
+  const anote = el('an_'+id).value.trim() || null;
+  const cnote = el('cn_'+id).value.trim() || null;
+  const blocker = el('b_'+id).checked;
+  const bnote = (el('bn_'+id).value || '').trim() || null;
 
-  const { error } = await sb.from('product_items').update({
-    trade_name: trade || null,
-    common_name: common || null,
-    reg_no: reg || null,
-    receipt_no: rcpt || null,
-    status_step: step || null,
-    admin_note: anote || null,
+  const payload = {
+    trade_name: trade,
+    common_name: common,
+    reg_no: reg,
+    receipt_no: rcpt,
+    status_step: step,
+    submitted_at: subm,
+    admin_note: anote,
+    client_note: cnote,
     blocker,
-    blocker_note: bnote
-  }).eq('id', id);
+    blocker_note: blocker ? bnote : null
+  };
 
-  if(error) return log('แก้ไขรายการผลิตภัณฑ์ผิดพลาด', error.message);
+  const { error } = await sb.from('product_items').update(payload).eq('id', id);
+  if(error){ log('บันทึกรายการไม่สำเร็จ', error.message); alert('บันทึกไม่สำเร็จ: '+error.message); return; }
+  log('บันทึกสำเร็จ', id);
   await loadItems();
-  log('แก้ไขรายการผลิตภัณฑ์แล้ว');
 }
 
 async function delItem(id){
@@ -561,7 +526,7 @@ async function loadItems(){
 
   const { data, error } = await sb
     .from('product_items')
-    .select('id,trade_name,common_name,reg_no,receipt_no,status_step,admin_note,client_note,blocker,blocker_note,updated_at')
+    .select('id,trade_name,common_name,reg_no,receipt_no,status_step,submitted_at,admin_note,client_note,blocker,blocker_note,updated_at')
     .eq('project_id', selectedProject.id)
     .order('created_at',{ascending:false});
   if(error){ log('โหลดรายการผลิตภัณฑ์ผิดพลาด', error.message); return; }
@@ -577,15 +542,69 @@ async function loadItems(){
   if(status) rows = rows.filter(x => (x.status_step||'') === status);
   if(onlyBlocker) rows = rows.filter(x => x.blocker);
 
+  const opt = (val,cur)=> `<option value="${val}" ${cur===val?'selected':''}>${
+    { waiting_docs:'รอเอกสาร', precheck:'ตรวจเบื้องต้น', submitted:'ยื่นแล้ว',
+      pending_result:'รอผล', done:'เสร็จสิ้น', rejected:'ถูกตีกลับ'}[val] || val
+  }</option>`;
+
   el('items').innerHTML = rows.map(x=>`
     <div class="item">
-      <div><strong>${x.trade_name||'-'}</strong> <span class="muted">(${x.common_name||'-'})</span></div>
-      <div class="muted">ทะเบียน: ${x.reg_no||'-'} • เลขรับ: ${x.receipt_no||'-'} • ขั้น: ${x.status_step||'-'}</div>
-      <div class="muted">ปัญหา: ${x.blocker ? 'มี' : 'ไม่มี'} ${x.blocker && x.blocker_note ? '— '+x.blocker_note : ''}</div>
-      <div class="muted">หมายเหตุเรา: ${x.admin_note||'-'} | หมายเหตุลูกค้า: ${x.client_note||'-'}</div>
-      <div class="muted">อัปเดตล่าสุด: ${new Date(x.updated_at).toLocaleString()}</div>
-      <div class="row" style="margin-top:6px; gap:6px">
-        <button onclick="editItem('${x.id}')">แก้ไข</button>
+      <div class="row" style="gap:10px; align-items:flex-start; flex-wrap:wrap">
+        <div style="min-width:220px; flex:1">
+          <div class="muted">ชื่อการค้า</div>
+          <input id="t_${x.id}" value="${esc(x.trade_name||'')}" placeholder="ชื่อการค้า">
+        </div>
+        <div style="min-width:220px; flex:1">
+          <div class="muted">ชื่อสามัญ</div>
+          <input id="c_${x.id}" value="${esc(x.common_name||'')}" placeholder="ชื่อสามัญ">
+        </div>
+        <div>
+          <div class="muted">ทะเบียน</div>
+          <input id="r_${x.id}" value="${esc(x.reg_no||'')}" placeholder="ทะเบียน" style="width:160px">
+        </div>
+        <div>
+          <div class="muted">เลขรับ</div>
+          <input id="rc_${x.id}" value="${esc(x.receipt_no||'')}" placeholder="เลขรับ" style="width:140px">
+        </div>
+        <div>
+          <div class="muted">สถานะ</div>
+          <select id="s_${x.id}" style="width:180px">
+            ${opt('waiting_docs',x.status_step)}
+            ${opt('precheck',x.status_step)}
+            ${opt('submitted',x.status_step)}
+            ${opt('pending_result',x.status_step)}
+            ${opt('done',x.status_step)}
+            ${opt('rejected',x.status_step)}
+          </select>
+        </div>
+        <div>
+          <div class="muted">ส่งหน่วยงานวันที่</div>
+          <input id="sub_${x.id}" type="date" value="${x.submitted_at||''}" style="width:160px">
+        </div>
+      </div>
+
+      <div class="row" style="gap:10px; align-items:flex-start; flex-wrap:wrap">
+        <div style="flex:1; min-width:240px">
+          <div class="muted">หมายเหตุ (ฝั่งเรา)</div>
+          <input id="an_${x.id}" value="${esc(x.admin_note||'')}" placeholder="หมายเหตุภายใน">
+        </div>
+        <div style="flex:1; min-width:240px">
+          <div class="muted">หมายเหตุลูกค้า</div>
+          <input id="cn_${x.id}" value="${esc(x.client_note||'')}" placeholder="หมายเหตุลูกค้า">
+        </div>
+      </div>
+
+      <div class="row" style="gap:8px; margin-top:6px">
+        <label class="pill" style="cursor:pointer">
+          <input type="checkbox" id="b_${x.id}" ${x.blocker ? 'checked' : ''} style="accent-color:#22d3ee"> มีปัญหา (blocker)
+        </label>
+        <input id="bn_${x.id}" value="${esc(x.blocker_note||'')}" placeholder="รายละเอียดปัญหา" style="flex:1; min-width:260px">
+      </div>
+
+      <div class="muted" style="margin-top:6px">อัปเดตล่าสุด: ${new Date(x.updated_at).toLocaleString()}</div>
+
+      <div class="row" style="margin-top:8px; gap:8px">
+        <button onclick="saveItem('${x.id}')">บันทึก</button>
         <button onclick="delItem('${x.id}')">ลบ</button>
       </div>
     </div>
@@ -594,13 +613,15 @@ async function loadItems(){
 
 /* ===== Bindings & Realtime ===== */
 document.addEventListener('DOMContentLoaded', async ()=>{
-  // ปุ่มล็อกอิน/ออก
+  // ปุ่ม auth & PIN
   el('btnSignIn').onclick = signIn;
   el('btnSignOut').onclick = signOut;
-
-  // PIN
   el('btnVerifyPin').onclick = verifyPin;
   el('btnSetPin').onclick = setPin;
+
+  // auth state
+  sb.auth.onAuthStateChange(afterAuth);
+  await afterAuth(); // จะเรียก guardAdminStaff ภายในถ้าล็อกอินแล้ว
 
   // ปุ่มอื่น ๆ
   el('btnRefresh').onclick = listAll;
@@ -612,15 +633,12 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   el('btnUpload').onclick = uploadDoc;
   el('btnAddItem').onclick = addItem;
   el('search').oninput = listAll;
+
   ['itSearch','itFilterStatus','itOnlyBlocker'].forEach(id=>{
     const n = el(id); if(n) n.oninput = loadItems;
   });
 
-  // auth state
-  sb.auth.onAuthStateChange(afterAuth);
-  await afterAuth();
-
-  // realtime
+  // realtime subscribe
   sb.channel('rt-admin')
     .on('postgres_changes', { event:'*', schema:'public', table:'timeline' }, payload => {
       if(selectedProject && payload.new.project_id === selectedProject.id){ loadTimeline(); }
