@@ -1,422 +1,135 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ระบบติดตามขึ้นทะเบียนทางการเกษตร</title>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root {
-  --primary: #059669;
-  --primary-dark: #047857;
-  --primary-light: #34d399;
-  --secondary: #3b82f6;
-  --bg-main: #f8fafc;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-}
-
-- {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  }
-
-body {
-font-family: ‘Prompt’, sans-serif;
-min-height: 100vh;
-background: linear-gradient(135deg, #0f766e 0%, #059669 40%, #34d399 100%);
-display: flex;
-align-items: center;
-justify-content: center;
-padding: 20px;
-position: relative;
-overflow: hidden;
-}
-
-/* Background decorations */
-body::before {
-content: ‘’;
-position: absolute;
-width: 600px;
-height: 600px;
-background: rgba(255,255,255,0.1);
-border-radius: 50%;
-top: -300px;
-right: -300px;
-animation: float 20s ease-in-out infinite;
-}
-
-body::after {
-content: ‘’;
-position: absolute;
-width: 400px;
-height: 400px;
-background: rgba(255,255,255,0.05);
-border-radius: 50%;
-bottom: -200px;
-left: -200px;
-animation: float 15s ease-in-out infinite reverse;
-}
-
-@keyframes float {
-0%, 100% { transform: translateY(0) rotate(0deg); }
-50% { transform: translateY(-30px) rotate(10deg); }
-}
-
-.container {
-position: relative;
-z-index: 1;
-width: 100%;
-max-width: 1000px;
-animation: fadeInUp 0.8s ease-out;
-}
-
-@keyframes fadeInUp {
-from {
-opacity: 0;
-transform: translateY(40px);
-}
-to {
-opacity: 1;
-transform: translateY(0);
-}
-}
-
-/* Header */
-.header {
-text-align: center;
-margin-bottom: 60px;
-color: white;
-}
-
-.logo {
-width: 120px;
-height: 120px;
-background: rgba(255,255,255,0.15);
-backdrop-filter: blur(10px);
-border-radius: 30px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 64px;
-margin: 0 auto 30px;
-box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-animation: pulse 3s ease-in-out infinite;
-}
-
-@keyframes pulse {
-0%, 100% { transform: scale(1); }
-50% { transform: scale(1.05); }
-}
-
-.title {
-font-size: 42px;
-font-weight: 800;
-margin-bottom: 16px;
-text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-
-.subtitle {
-font-size: 20px;
-font-weight: 300;
-opacity: 0.95;
-}
-
-/* Cards Grid */
-.cards-grid {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-gap: 32px;
-margin-bottom: 40px;
-}
-
-/* Card */
-.card {
-background: rgba(255,255,255,0.98);
-border-radius: 24px;
-padding: 40px 32px;
-text-align: center;
-cursor: pointer;
-transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-position: relative;
-overflow: hidden;
-}
-
-.card::before {
-content: ‘’;
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-height: 6px;
-background: linear-gradient(90deg, var(–primary), var(–primary-light));
-transform: scaleX(0);
-transition: transform 0.4s;
-}
-
-.card:hover {
-transform: translateY(-12px);
-box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-}
-
-.card:hover::before {
-transform: scaleX(1);
-}
-
-.card:active {
-transform: translateY(-8px);
-}
-
-.card-icon {
-width: 80px;
-height: 80px;
-background: linear-gradient(135deg, var(–primary), var(–primary-light));
-border-radius: 20px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 40px;
-margin: 0 auto 24px;
-box-shadow: 0 10px 30px rgba(5, 150, 105, 0.3);
-transition: all 0.3s;
-}
-
-.card:hover .card-icon {
-transform: scale(1.1) rotate(5deg);
-box-shadow: 0 15px 40px rgba(5, 150, 105, 0.4);
-}
-
-.card-title {
-font-size: 28px;
-font-weight: 700;
-color: var(–text-primary);
-margin-bottom: 12px;
-}
-
-.card-description {
-font-size: 16px;
-color: var(–text-secondary);
-line-height: 1.6;
-margin-bottom: 24px;
-}
-
-.card-features {
-list-style: none;
-text-align: left;
-margin-bottom: 28px;
-}
-
-.card-features li {
-padding: 8px 0;
-color: var(–text-secondary);
-font-size: 14px;
-display: flex;
-align-items: center;
-gap: 10px;
-}
-
-.card-features li::before {
-content: ‘✓’;
-width: 24px;
-height: 24px;
-background: rgba(5, 150, 105, 0.1);
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-color: var(–primary);
-font-weight: 700;
-flex-shrink: 0;
-}
-
-.card-button {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-gap: 10px;
-padding: 14px 32px;
-background: var(–primary);
-color: white;
-border-radius: 12px;
-font-weight: 600;
-font-size: 16px;
-text-decoration: none;
-transition: all 0.3s;
-box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
-}
-
-.card:hover .card-button {
-background: var(–primary-dark);
-transform: scale(1.05);
-box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
-}
-
-/* Admin Card Specific */
-.card-admin .card-icon {
-background: linear-gradient(135deg, #3b82f6, #60a5fa);
-box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-}
-
-.card-admin:hover .card-icon {
-box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
-}
-
-.card-admin .card-button {
-background: var(–secondary);
-box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-}
-
-.card-admin:hover .card-button {
-background: #2563eb;
-box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-}
-
-.card-admin::before {
-background: linear-gradient(90deg, var(–secondary), #60a5fa);
-}
-
-/* Footer */
-.footer {
-text-align: center;
-color: white;
-font-size: 14px;
-opacity: 0.9;
-}
-
-.footer-divider {
-width: 60px;
-height: 3px;
-background: rgba(255,255,255,0.3);
-margin: 20px auto;
-border-radius: 2px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-.title {
-font-size: 32px;
-}
-
-.subtitle {
-font-size: 16px;
-}
-
-.cards-grid {
-grid-template-columns: 1fr;
-gap: 24px;
-}
-
-.card {
-padding: 32px 24px;
-}
-
-.logo {
-width: 100px;
-height: 100px;
-font-size: 48px;
-}
-}
-
-/* Decorative elements */
-.pattern {
-position: absolute;
-width: 100%;
-height: 100%;
-opacity: 0.05;
-pointer-events: none;
-background-image:
-repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px);
-}
-</style>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Portal — Smart Entry</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --bg1:#06b6d4; --bg2:#10b981; --ink:#0f172a; --mut:#64748b;
+      --card:#ffffff; --radius:20px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:"Prompt",sans-serif; color:var(--ink);
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+    }
+    .container{
+      width:100%; max-width:460px; background:var(--card); border-radius:var(--radius);
+      padding:36px 28px; box-shadow:0 10px 40px rgba(0,0,0,.12); text-align:center;
+    }
+    h1{margin:0 0 8px; font-size:28px}
+    p{margin:0 0 22px; color:var(--mut)}
+    .btn{
+      display:block; width:100%; padding:14px; margin:10px 0; border:none; border-radius:12px;
+      font-weight:700; font-size:16px; color:#fff; cursor:pointer; text-decoration:none;
+      background:linear-gradient(135deg,#0ea5e9,#10b981); transition:.2s;
+    }
+    .btn:hover{transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.15)}
+    .btn.admin{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+    .btn.admin:hover{box-shadow:0 4px 12px rgba(0,0,0,.2)}
+    footer{margin-top:18px; font-size:12px; color:#94a3b8}
+    .hide{display:none}
+    .spinner{display:inline-block; width:18px; height:18px; border:3px solid #e5e7eb; border-top-color:#0ea5e9; border-radius:50%; animation:spin 1s linear infinite; vertical-align:-3px; margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
 </head>
 <body>
-  <div class="pattern"></div>
-
   <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <div class="logo">🌾</div>
-      <h1 class="title">ระบบติดตามขึ้นทะเบียน</h1>
-      <p class="subtitle">ทางการเกษตร - ง่าย รวดเร็ว โปร่งใส</p>
+    <div id="loadingBox">
+      <h1>🏢 Company Portal</h1>
+      <p><span class="spinner"></span>กำลังตรวจสอบสถานะการเข้าสู่ระบบ…</p>
+      <p id="hint" class="hide" style="margin-top:8px;">ถ้าค้างนาน ลองรีเฟรชหน้าอีกครั้ง</p>
     </div>
 
-```
-<!-- Cards Grid -->
-<div class="cards-grid">
-  <!-- Admin Card -->
-  <div class="card card-admin" onclick="window.location.href='admin.html'">
-    <div class="card-icon">👨‍💼</div>
-    <h2 class="card-title">Admin / Staff</h2>
-    <p class="card-description">สำหรับทีมงาน จัดการทุกอย่าง</p>
-    
-    <ul class="card-features">
-      <li>จัดการบริษัทและโปรเจ็กต์</li>
-      <li>เพิ่ม/แก้ไขข้อมูลทั้งหมด</li>
-      <li>สร้างบัญชีลูกค้า</li>
-      <li>ติดตามสถานะ Real-time</li>
-      <li>อัปโหลดเอกสาร</li>
-    </ul>
-    
-    <a href="admin.html" class="card-button">
-      <span>เข้าสู่ระบบแอดมิน</span>
-      <span>→</span>
-    </a>
-  </div>
-
-  <!-- Client Card -->
-  <div class="card" onclick="window.location.href='client.html'">
-    <div class="card-icon">👥</div>
-    <h2 class="card-title">Client / ลูกค้า</h2>
-    <p class="card-description">สำหรับลูกค้า ดูสถานะโปรเจ็กต์</p>
-    
-    <ul class="card-features">
-      <li>ดูสถานะโปรเจ็กต์</li>
-      <li>ติดตามความคืบหน้า</li>
-      <li>ดูรายการผลิตภัณฑ์</li>
-      <li>ดาวน์โหลดเอกสาร</li>
-      <li>อัปเดตแบบ Real-time</li>
-    </ul>
-    
-    <a href="client.html" class="card-button">
-      <span>เข้าสู่ระบบลูกค้า</span>
-      <span>→</span>
-    </a>
-  </div>
-</div>
-
-<!-- Footer -->
-<div class="footer">
-  <div class="footer-divider"></div>
-  <p>🌱 ระบบบริหารจัดการขึ้นทะเบียนผลิตภัณฑ์ทางการเกษตร</p>
-  <p style="margin-top: 8px; opacity: 0.7;">Powered by Modern Web Technology</p>
-</div>
-```
-
+    <div id="choiceBox" class="hide">
+      <h1>🏢 Company Portal</h1>
+      <p>เลือกโหมดที่คุณต้องการเข้าสู่ระบบ</p>
+      <a href="customer.html" class="btn">🔓 สำหรับลูกค้า (Customer)</a>
+      <a href="admin_login.html" class="btn admin">🔐 สำหรับผู้ดูแล (Admin)</a>
+      <footer>© 2025 Company Portal — Powered by Supabase</footer>
+    </div>
   </div>
 
   <script>
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.key === '1') {
-        window.location.href = 'admin.html';
-      } else if (e.key === '2') {
-        window.location.href = 'client.html';
-      }
-    });
+    // ------------ ตั้งค่า Supabase (ใช้ anon key) ------------
+    const SUPABASE_URL = "https://qmugpalgcktfwixqepti.supabase.co";
+    const SUPABASE_KEY = "YOUR-ANON-KEY"; // <- ใส่ anon key ของโปรเจกต์
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Prevent click event from firing twice
-    document.querySelectorAll('.card').forEach(card => {
-      card.addEventListener('click', (e) => {
-        if (e.target.tagName === 'A') {
-          e.stopPropagation();
-        }
-      });
+    const loadingBox = document.getElementById('loadingBox');
+    const choiceBox  = document.getElementById('choiceBox');
+    const hint       = document.getElementById('hint');
+
+    function showChoice(){
+      loadingBox.classList.add('hide');
+      choiceBox.classList.remove('hide');
+    }
+
+    // fallback safety: ถ้าตรวจสอบช้าเกินไป ให้ขึ้นปุ่มเลือก
+    const fallbackTimer = setTimeout(()=>{ hint.classList.remove('hide'); showChoice(); }, 4000);
+
+    async function smartRoute(){
+      // ถ้าบังคับโชว์ปุ่มด้วย query (?force=choice=1) ก็ไม่ redirect อัตโนมัติ
+      const params = new URLSearchParams(location.search);
+      if (params.get('force') === 'choice' || params.get('force') === 'choice=1'){
+        clearTimeout(fallbackTimer);
+        showChoice(); 
+        return;
+      }
+
+      const { data: { user } } = await sb.auth.getUser();
+      if(!user){
+        clearTimeout(fallbackTimer);
+        showChoice();
+        return;
+      }
+
+      // มี session แล้ว → ดึงบทบาทจาก company_members
+      const { data, error } = await sb
+        .from('company_members')
+        .select('role')
+        .eq('user_id', user.id);
+
+      clearTimeout(fallbackTimer);
+
+      if(error){
+        // ดึง role ไม่ได้ → ให้ผู้ใช้เลือกเอง
+        showChoice();
+        return;
+      }
+
+      if(!data || data.length === 0){
+        // ไม่มี mapping → ให้เลือกเอง
+        showChoice();
+        return;
+      }
+
+      // ถ้ามีหลายแถว ให้ admin ชนะความสำคัญ
+      const roles = data.map(r => (r.role || '').toLowerCase());
+      if (roles.includes('admin')) {
+        window.location.href = 'admin.html';
+        return;
+      }
+      if (roles.includes('staff')) {
+        // ถ้าคุณมีหน้า staff แยก ให้เปลี่ยนปลายทางได้ เช่น 'staff.html'
+        // ตอนนี้ให้เข้า admin.html ไปก่อน หรือจะแก้เป็น customer.html ก็ได้
+        window.location.href = 'admin.html';
+        return;
+      }
+      // ค่าเริ่มต้น → ลูกค้า
+      window.location.href = 'customer.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', smartRoute);
+
+    // ถ้ามีการเปลี่ยนสถานะ auth กลางหน้า ให้ลอง route ใหม่
+    sb.auth.onAuthStateChange((_event, _session) => {
+      smartRoute();
     });
   </script>
-
 </body>
 </html>
