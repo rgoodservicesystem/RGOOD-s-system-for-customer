@@ -3,272 +3,495 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ลูกค้า — ติดตามงานขึ้นทะเบียน</title>
+<title>ลูกค้า — ติดตามงานขึ้นทะเบียน (View Only)</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-  :root{ --bg:#0f172a; --card:#0e1628; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --accent:#22d3ee;}
+  :root{
+    --bg:#0f172a; --card:#0e1628; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --accent:#22d3ee;
+    --ok:#10b981; --warn:#f59e0b; --err:#ef4444;
+  }
   *{box-sizing:border-box}
-  body{margin:0; background:linear-gradient(180deg,#0b1224,#0f172a); color:var(--ink); font-family:'Prompt',system-ui;}
-  .wrap{max-width:1100px; margin:24px auto; padding:16px}
-  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px}
-  .row{display:flex; gap:8px; align-items:center; margin:8px 0; flex-wrap:wrap}
-  .muted{color:var(--muted); font-size:12px}
-  .btn{border-radius:10px; border:1px solid var(--border); padding:10px 14px; background:#0b2b2f; color:#aaf3ff; font-weight:700; cursor:pointer}
-  .btn:hover{filter:brightness(1.1)}
-  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0}
-  .tab{padding:6px 10px; border:1px solid var(--border); border-radius:999px; cursor:pointer; background:#071a29}
-  .tab.active{outline:2px solid var(--accent)}
-  .item{padding:10px; border:1px solid var(--border); border-radius:10px; background:#0b1224}
-  a{color:#86e1f0}
-  input,select{border-radius:10px; border:1px solid var(--border); background:#071326; color:var(--ink); padding:10px 12px}
+  body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--ink);font-family:'Prompt',system-ui}
+  .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+  header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .brand{display:flex;gap:10px;align-items:center}
+  img.logo{width:44px;height:44px;border-radius:10px;box-shadow:0 0 16px rgba(255,255,255,.12)}
+  h1{font-size:20px;margin:0}
+  .muted{color:var(--muted);font-size:13px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 10px 26px rgba(0,0,0,.24)}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  input,select{background:#071326;color:var(--ink);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#072027;border:1px solid #10343a;font-size:12px}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{background:#0b1220;border:1px solid var(--border);border-radius:14px;padding:12px}
+  .item h3{margin:0 0 6px 0;font-size:16px}
+  .section{margin-top:10px}
+  .section h4{margin:0 0 6px 0;font-size:14px}
+  .pill{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+  .st-wait{background:rgba(148,163,184,.16);color:#cbd5e1}
+  .st-pre{background:rgba(37,99,235,.14);color:#93c5fd}
+  .st-sub{background:rgba(34,211,238,.14);color:#67e8f9}
+  .st-pend{background:rgba(245,158,11,.14);color:#fbbf24}
+  .st-done{background:rgba(16,185,129,.14);color:#34d399}
+  .st-rej{background:rgba(239,68,68,.14);color:#f87171}
+  .kbar{display:flex;gap:8px;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  th,td{border-bottom:1px solid var(--border);padding:10px;font-size:13px;text-align:left}
+  th{background:#0a192f;color:#cbd5e1}
+  .hint{font-size:12px;color:var(--muted)}
+  .link{color:#7dd3fc}
+  .center{display:flex;align-items:center;justify-content:center}
+  .empty{padding:16px;border:1px dashed #2b3c52;border-radius:12px;text-align:center;color:#9fb3c8}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;background:#0b2237;border:1px solid #14344c;border-radius:999px;font-size:12px}
+  /* accordion */
+  .acc{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#0b1220}
+  .acc-h{display:flex;align-items:center;justify-content:space-between;padding:12px;cursor:pointer}
+  .acc-h:hover{background:#0c1930}
+  .acc-b{display:none;padding:12px;border-top:1px solid var(--border);background:#0b1220}
+  .acc.open .acc-b{display:block}
+  /* splash */
+  #splash{position:fixed;inset:0;background:#0b1224;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+  #splash img{width:100px;border-radius:12px;animation:spin 4s linear infinite}
+  #splash h2{margin-top:10px;font-size:16px;color:#dbeafe}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h2>พอร์ทัลลูกค้า — ติดตามงานขึ้นทะเบียน</h2>
+<!-- Splash -->
+<div id="splash">
+  <img src="https://i.ibb.co/J1KDprF/image.jpg" alt="logo">
+  <h2>กำลังตรวจสอบสิทธิ์ลูกค้า…</h2>
+</div>
 
-  <!-- การ์ดล็อกอินบัญชี (อีเมล/รหัสผ่าน) -->
-  <div id="authCard" class="card">
-    <div class="row"><strong>เข้าสู่ระบบลูกค้า</strong> <span class="muted">กรุณาล็อกอินด้วยอีเมลและรหัสผ่านของคุณ</span></div>
-    <div class="row">
-      <input id="email" placeholder="email@example.com">
-      <input id="password" type="password" placeholder="รหัสผ่าน">
-      <button class="btn" id="btnSignIn">เข้าสู่ระบบ</button>
-      <button class="btn" id="btnSignOut" style="display:none">ออกจากระบบ</button>
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div class="brand">
+      <img class="logo" src="https://i.ibb.co/J1KDprF/image.jpg" alt="logo">
+      <div>
+        <h1>พอร์ทัลลูกค้า — ระบบติดตามงานขึ้นทะเบียน</h1>
+        <div class="muted" id="who"></div>
+      </div>
     </div>
-    <div class="muted" id="authMsg"></div>
+    <div class="row">
+      <a class="chip" href="index.html">← กลับหน้าแรก</a>
+      <a class="chip" target="_blank" href="https://line.me/R/ti/p/@991cyisb">LINE OA: @991cyisb</a>
+    </div>
+  </header>
+
+  <!-- แถบค้นหา/ตัวกรองระดับบริษัท -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div>
+        <div class="muted">บริษัท:</div>
+        <div class="row" id="companyBadges"></div>
+      </div>
+      <div class="row">
+        <input id="q" placeholder="ค้นหาโปรเจ็กต์/บริษัท/โค้ด…">
+        <button id="btnRefresh">รีเฟรช</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Gate: Company Login (หลังจากล็อกอินบัญชีแล้ว) -->
-  <div id="loginCard" class="card" style="display:none">
-    <div class="row"><strong>ยืนยันบริษัทของคุณ</strong> <span class="muted">กรอกรหัสบริษัท + Login ID ที่ได้รับจากผู้ให้บริการ</span></div>
-    <div class="row">
-      <input id="companyCode" placeholder="รหัสบริษัท (เช่น RGD001)">
-      <input id="loginId" placeholder="Login ID (เช่น client01)">
-      <button class="btn" id="btnConfirmCompany">ยืนยัน</button>
-      <button class="btn" id="btnLine1">ติดต่อเจ้าหน้าที่ผ่าน LINE</button>
-    </div>
-    <div class="muted">* ต้องล็อกอินบัญชีของคุณก่อน หากยังไม่ได้ล็อกอิน โปรดเข้าสู่ระบบด้านบน</div>
-    <div class="muted" id="loginMsg"></div>
-  </div>
-
-  <!-- Main (เฉพาะลูกค้าที่ผ่านการยืนยันบริษัท) -->
-  <div id="main" style="display:none">
-    <div class="card" style="display:flex; justify-content:space-between; align-items:center">
-      <div class="row" style="margin:0">
-        <input id="kw" placeholder="ค้นหา: ชื่อการค้า/ชื่อสามัญ/ทะเบียน/เลขรับ/หมายเหตุ" style="min-width:320px">
-        <select id="status">
-          <option value="">ทุกสถานะ</option>
-          <option value="waiting_docs">รอเอกสาร</option>
-          <option value="precheck">ตรวจเบื้องต้น</option>
-          <option value="submitted">ยื่นแล้ว</option>
-          <option value="pending_result">รอผล</option>
-          <option value="done">เสร็จสิ้น</option>
-          <option value="rejected">ถูกตีกลับ</option>
-        </select>
-        <label class="tab"><input type="checkbox" id="onlyBlocker" style="accent-color:#22d3ee"> เฉพาะที่มีปัญหา</label>
-      </div>
-      <div class="row" style="margin:0">
-        <button class="btn" id="btnLine2">ติดต่อเจ้าหน้าที่ผ่าน LINE</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="tabs" id="tabs">
-        <div class="tab active" data-step="">ทั้งหมด</div>
-        <div class="tab" data-step="waiting_docs">รอเอกสาร</div>
-        <div class="tab" data-step="precheck">ตรวจเบื้องต้น</div>
-        <div class="tab" data-step="submitted">ยื่นแล้ว</div>
-        <div class="tab" data-step="pending_result">รอผล</div>
-        <div class="tab" data-step="done">เสร็จสิ้น</div>
-        <div class="tab" data-step="rejected">ถูกตีกลับ</div>
-        <div class="tab" data-step="__blocker__">เฉพาะมีปัญหา</div>
-      </div>
-      <div id="items"></div>
-    </div>
-
-    <div class="card">
-      <h3 id="companyHeader"></h3>
-      <div class="muted">ดูความคืบหน้ารวมของทุกโปรเจ็กต์ด้านบน • หากมีข้อสงสัยกด “ติดต่อเจ้าหน้าที่ผ่าน LINE”</div>
-    </div>
+  <!-- รายการโปรเจ็กต์ -->
+  <div class="section">
+    <h4>โปรเจ็กต์ของบริษัทคุณ</h4>
+    <div id="projects" class="list"></div>
+    <div id="projMsg" class="hint" style="margin-top:8px"></div>
   </div>
 </div>
 
 <script>
-/* ===== Config (ฝังค่าโปรเจ็กต์จริง) ===== */
+/* ===== Config: ใช้ของคุณที่ให้มา ===== */
 const SUPABASE_URL = 'https://jlrogimfjmtwdqiuyejj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impscm9naW1mam10d2RxaXV5ZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NDIyODUsImV4cCI6MjA3NTUxODI4NX0.OvX7qgcIF5aCcLebUEUR_6D2KTUP2pALCjRtHWJ5qZg';
-const LINE_CONTACT_URL = 'https://line.me/R/ti/p/@991cyisb';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===== Utils ===== */
+const qs = new URLSearchParams(location.search);
+const COMPANY_CODE = (qs.get('company')||'').trim();
+const LOGIN_ID = (qs.get('login')||'').trim();
+const el = id => document.getElementById(id);
+const fmtDate = d => { if(!d) return '-'; const x=new Date(d); if(isNaN(x)) return '-'; return x.toLocaleDateString('th-TH'); };
+function statusChip(s){
+  const map = {
+    waiting_docs: ['st-wait','รอเอกสาร'],
+    precheck: ['st-pre','ตรวจเบื้องต้น'],
+    submitted: ['st-sub','ยื่นแล้ว'],
+    pending_result: ['st-pend','รอผล'],
+    done: ['st-done','เสร็จสิ้น'],
+    rejected: ['st-rej','ถูกตีกลับ']
+  };
+  const [cls,txt] = map[s] || ['st-wait', s||'-'];
+  return `<span class="pill ${cls}">${txt}</span>`;
+}
+function isDriveLink(url){ return /https?:\/\/(drive\.google\.com|docs\.google\.com)/i.test(url||''); }
+function toDrivePreview(url){
+  if(!url) return '';
+  const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(m) return `https://drive.google.com/file/d/${m[1]}/preview`;
+  if(url.includes('docs.google.com')) return url.replace(/\/edit.*$/,'/pub?embedded=true');
+  return url;
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
 
 /* ===== State ===== */
-let company = { code: null, id: null, role: null };
-let activeTab = '';
+let company = null;         // {id,name,code}
+let client = null;          // {id,login_id,display_name}
+let projects = [];          // list of projects
 
-/* ===== Helpers ===== */
-const el = id => document.getElementById(id);
-const tabsEl = () => document.getElementById('tabs');
-
-function openLine(prefMsg){
-  const msg = prefMsg ? `?msg=${encodeURIComponent(prefMsg)}` : '';
-  window.open(LINE_CONTACT_URL + msg, '_blank');
-}
-function msg(id, text){ const n = document.getElementById(id); if(n) n.textContent = text || ''; }
-
-/* ===== Auth (ลูกค้าต้องล็อกอินบัญชี) ===== */
-async function signIn(){
-  const email = el('email').value.trim();
-  const password = el('password').value;
-  if(!email || !password){ return msg('authMsg','กรอกอีเมลและรหัสผ่าน'); }
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ return msg('authMsg','เข้าสู่ระบบไม่สำเร็จ: ' + error.message); }
-  // afterAuth() จะถูกเรียกโดย onAuthStateChange
-}
-
-async function signOut(){
-  await sb.auth.signOut();
-  localStorage.removeItem('companyCode');
-  localStorage.removeItem('loginId');
-  location.reload();
-}
-
-async function afterAuth(){
-  const { data: s } = await sb.auth.getSession();
-  const signedIn = !!s.session;
-  el('btnSignIn').style.display = signedIn ? 'none' : '';
-  el('btnSignOut').style.display = signedIn ? '' : 'none';
-  el('loginCard').style.display = signedIn ? 'block' : 'none';
-  msg('authMsg', signedIn ? 'เข้าสู่ระบบแล้ว' : '');
-}
-
-/* ===== Company Gate (ตรวจสิทธิ์บริษัท) ===== */
-async function confirmCompany(){
-  const code = el('companyCode').value.trim();
-  const loginId = el('loginId').value.trim();
-  if(!code || !loginId){
-    msg('loginMsg','กรุณากรอกรหัสบริษัทและ Login ID'); return;
+/* ===== Boot: verify client ===== */
+(async function boot(){
+  if(!COMPANY_CODE || !LOGIN_ID){
+    alert('ลิงก์ไม่ครบ: ต้องมี ?company=รหัสบริษัท&login=ไอดีลูกค้า');
+    return;
   }
-  const { data: s } = await sb.auth.getSession();
-  if(!s.session){ msg('loginMsg','ยังไม่ได้ล็อกอินบัญชีลูกค้า'); return; }
+  try{
+    // หา company
+    const { data:co, error:ce } = await sb.from('companies').select('id,name,code').eq('code', COMPANY_CODE).maybeSingle();
+    if(ce) throw ce;
+    if(!co){ alert('ไม่พบบริษัทตามรหัสที่ให้'); return; }
+    company = co;
 
-  // RPC: check_company_access ต้องมีจากสคีมาที่ให้ไว้
-  const { data, error } = await sb.rpc('check_company_access', { p_company_code: code, p_login_id: loginId });
-  if(error || !data || data.length === 0){
-    msg('loginMsg','ยืนยันบริษัท/สิทธิ์ไม่ผ่าน — โปรดตรวจสอบรหัสบริษัทหรือ Login ID'); return;
+    // ตรวจ client (ต้องมีในตาราง clients และ is_active = true)
+    const { data:cl, error:cle } = await sb
+      .from('clients')
+      .select('id,login_id,display_name,is_active')
+      .eq('company_id', company.id)
+      .eq('login_id', LOGIN_ID)
+      .eq('is_active', true)
+      .maybeSingle();
+    if(cle) throw cle;
+    if(!cl){ alert('รหัสลูกค้าไม่ถูกต้อง หรือถูกปิดใช้งาน'); return; }
+    client = cl;
+
+    // UI header
+    el('who').textContent = `บริษัท: ${company.name} (รหัส ${company.code}) • ผู้เข้าใช้: ${client.display_name||client.login_id} — โหมดอ่านอย่างเดียว`;
+
+    // load projects
+    await loadProjects();
+
+    // splash → app
+    document.getElementById('splash').style.display='none';
+    document.getElementById('app').style.display='block';
+
+    // search
+    el('btnRefresh').onclick = loadProjects;
+    el('q').oninput = filterProjectsPaint;
+  }catch(e){
+    console.error(e);
+    alert('เกิดข้อผิดพลาดในการเข้าถึงข้อมูลลูกค้า');
   }
-  company.id = data[0].company_id;
-  company.code = code;
-  company.role = data[0].role;
+})();
 
-  localStorage.setItem('companyCode', code);
-  localStorage.setItem('loginId', loginId);
+/* ===== Load projects of this company ===== */
+async function loadProjects(){
+  const box = el('projects'); box.innerHTML = '';
+  el('projMsg').textContent = 'กำลังโหลด…';
+  try{
+    // โปรเจ็กต์ทั้งหมดของบริษัทนี้
+    let { data:rows, error } = await sb
+      .from('projects')
+      .select('id,title,status,due_date,companies:company_id(name,code)')
+      .eq('company_id', company.id)
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+    projects = rows || [];
 
-  el('companyHeader').textContent = `บริษัท: ${code}`;
-  el('main').style.display = 'block';
-  await refreshList();
-  subscribeRealtime();
-}
-
-/* ===== ดึง/แสดงรายการสินค้า (Read-Only) ===== */
-async function refreshList(){
-  const { data, error } = await sb
-    .from('v_product_items_search')
-    .select('trade_name,common_name,reg_no,receipt_no,status_step,blocker,blocker_note,admin_note,client_note,updated_at')
-    .eq('company_id', company.id)
-    .order('updated_at', { ascending: false });
-  if(error){ el('items').innerHTML = `<div class="muted">โหลดข้อมูลไม่สำเร็จ</div>`; return; }
-  renderItems(data || []);
-}
-
-function renderItems(rows){
-  const kw = (el('kw').value || '').toLowerCase().trim();
-  const statusSel = el('status').value || '';
-  const onlyBlocker = el('onlyBlocker').checked;
-  const tabStep = activeTab;
-
-  let list = rows;
-
-  if(kw){
-    list = list.filter(x=>{
-      const s = [
-        x.trade_name, x.common_name, x.reg_no, x.receipt_no,
-        x.admin_note, x.client_note, x.blocker_note
-      ].filter(Boolean).join(' ').toLowerCase();
-      return s.includes(kw);
-    });
+    // paint
+    paintCompanyBadges();
+    filterProjectsPaint();
+    el('projMsg').textContent = `รวม ${projects.length} โปรเจ็กต์`;
+  }catch(e){
+    console.error(e);
+    el('projMsg').textContent = 'โหลดโปรเจ็กต์ไม่ได้';
   }
-  if(statusSel) list = list.filter(x => (x.status_step||'') === statusSel);
-  if(tabStep){
-    if(tabStep === '__blocker__'){ list = list.filter(x => x.blocker); }
-    else list = list.filter(x => (x.status_step||'') === tabStep);
-  }
-  if(onlyBlocker) list = list.filter(x => x.blocker);
-
-  el('items').innerHTML = list.map(x=>`
-    <div class="item">
-      <div><strong>${x.trade_name || '-'}</strong> <span class="muted">(${x.common_name || '-'})</span></div>
-      <div class="muted">ทะเบียน: ${x.reg_no || '-'} • เลขรับ: ${x.receipt_no || '-'}</div>
-      <div class="muted">สถานะ: ${x.status_step || '-'}</div>
-      <div class="muted">ปัญหา: ${x.blocker ? 'มี' : 'ไม่มี'} ${x.blocker && x.blocker_note ? '— '+x.blocker_note : ''}</div>
-      <div class="muted">หมายเหตุทีม: ${x.admin_note || '-'}</div>
-      <div class="muted">หมายเหตุลูกค้า: ${x.client_note || '-'}</div>
-      <div class="muted">อัปเดต: ${new Date(x.updated_at).toLocaleString()}</div>
-    </div>
-  `).join('') || `<div class="muted">ไม่พบรายการ</div>`;
 }
 
-function subscribeRealtime(){
-  sb.channel('rt-client-plus')
-    .on('postgres_changes',{event:'*',schema:'public',table:'product_items'}, refreshList)
-    .on('postgres_changes',{event:'*',schema:'public',table:'timeline'}, refreshList)
-    .on('postgres_changes',{event:'*',schema:'public',table:'messages'}, refreshList)
-    .on('postgres_changes',{event:'*',schema:'public',table:'documents'}, refreshList)
-    .subscribe();
+function paintCompanyBadges(){
+  const area = document.getElementById('companyBadges');
+  area.innerHTML = `
+    <span class="badge">บริษัท: ${escapeHtml(company?.name||'-')}</span>
+    <span class="badge">รหัส: ${escapeHtml(company?.code||'-')}</span>
+    <span class="badge">ลูกค้า: ${escapeHtml(client?.display_name||client?.login_id||'-')}</span>
+  `;
 }
 
-/* ===== Init & Events ===== */
-document.addEventListener('DOMContentLoaded', async ()=>{
-  // Supabase Auth state
-  sb.auth.onAuthStateChange(afterAuth);
-  await afterAuth();
+/* ===== Paint projects with accordion ===== */
+function filterProjectsPaint(){
+  const q = (el('q').value||'').toLowerCase();
+  const box = el('projects'); box.innerHTML = '';
 
-  // ปุ่มล็อกอิน/ออก
-  el('btnSignIn').onclick = signIn;
-  el('btnSignOut').onclick = signOut;
-
-  // ยืนยันบริษัท
-  el('btnConfirmCompany').onclick = confirmCompany;
-
-  // LINE
-  el('btnLine1').onclick = ()=>openLine('[ลูกค้า] ขอความช่วยเหลือเรื่องการยืนยันบริษัท');
-  el('btnLine2').onclick = ()=>openLine('[ลูกค้า] สอบถามสถานะรายการขึ้นทะเบียน');
-
-  // ฟิลเตอร์/ค้นหา
-  ['kw','status','onlyBlocker'].forEach(id=>{
-    const n = el(id); if(n) n.oninput = ()=>refreshList();
+  const list = (projects||[]).filter(p=>{
+    if(!q) return true;
+    const s = `${p.title||''} ${p.status||''} ${p.companies?.name||''} ${p.companies?.code||''}`.toLowerCase();
+    return s.includes(q);
   });
 
-  // Tabs
-  document.querySelectorAll('#tabs .tab').forEach(t=>{
-    t.onclick = ()=>{
-      document.querySelectorAll('#tabs .tab').forEach(tt=>tt.classList.remove('active'));
-      t.classList.add('active');
-      activeTab = t.dataset.step || '';
-      refreshList();
+  if(!list.length){
+    box.innerHTML = `<div class="empty">— ไม่พบโปรเจ็กต์ที่ตรงกับคำค้น —</div>`;
+    return;
+  }
+
+  for(const p of list){
+    const acc = document.createElement('div'); acc.className='acc';
+    acc.innerHTML = `
+      <div class="acc-h">
+        <div class="row">
+          <h3>${escapeHtml(p.title||'-')}</h3>
+          <span class="pill">${statusChip(p.status)}</span>
+          <span class="badge">กำหนดส่ง: ${fmtDate(p.due_date)||'-'}</span>
+        </div>
+        <div class="muted">คลิกเพื่อดูรายละเอียด</div>
+      </div>
+      <div class="acc-b">
+        <div class="section">
+          <h4>รายการผลิตภัณฑ์/ทะเบียน</h4>
+          <div class="kbar">
+            <input id="s-${p.id}-kw" placeholder="ค้นหา: ชื่อการค้า/ชื่อสามัญ/ทะเบียน/เลขรับ" style="flex:1;min-width:260px">
+            <select id="s-${p.id}-st">
+              <option value="">ทุกสถานะ</option>
+              <option value="waiting_docs">รอเอกสาร</option>
+              <option value="precheck">ตรวจเบื้องต้น</option>
+              <option value="submitted">ยื่นแล้ว</option>
+              <option value="pending_result">รอผล</option>
+              <option value="done">เสร็จสิ้น</option>
+              <option value="rejected">ถูกตีกลับ</option>
+            </select>
+            <label class="badge"><input type="checkbox" id="s-${p.id}-blk"> เฉพาะที่มีปัญหา</label>
+            <span class="muted" id="s-${p.id}-msg"></span>
+          </div>
+          <div id="tbl-${p.id}" class="section"></div>
+        </div>
+
+        <div class="section">
+          <h4>ไทม์ไลน์ขั้นตอน</h4>
+          <div id="tl-${p.id}" class="list"></div>
+        </div>
+
+        <div class="section">
+          <h4>เอกสารแนบ</h4>
+          <div id="dc-${p.id}" class="list"></div>
+        </div>
+
+        <div class="section">
+          <h4>ข้อความจากทีมงาน</h4>
+          <div id="mg-${p.id}" class="list"></div>
+        </div>
+      </div>
+    `;
+    // toggle
+    acc.querySelector('.acc-h').onclick = async ()=>{
+      acc.classList.toggle('open');
+      if(acc.classList.contains('open')){
+        await Promise.all([
+          loadItems(p.id),
+          loadTimeline(p.id),
+          loadDocs(p.id),
+          loadMessages(p.id)
+        ]);
+        // bind filters for items
+        const kw = el(`s-${p.id}-kw`);
+        const st = el(`s-${p.id}-st`);
+        const bk = el(`s-${p.id}-blk`);
+        [kw,st,bk].forEach(n=>n && (n.oninput = ()=>loadItems(p.id)));
+      }
     };
-  });
+    box.appendChild(acc);
+  }
+}
 
-  // เติมค่าจาก query string / localStorage (ถ้ามี)
-  const u = new URL(location.href);
-  const qCompany = u.searchParams.get('company');
-  const qLogin = u.searchParams.get('login');
-  if(qCompany) el('companyCode').value = qCompany;
-  if(qLogin) el('loginId').value = qLogin;
+/* ===== Items (read-only list with filters) ===== */
+async function loadItems(projectId){
+  const kw = (el(`s-${projectId}-kw`)?.value||'').toLowerCase();
+  const st = (el(`s-${projectId}-st`)?.value||'');
+  const bk = !!(el(`s-${projectId}-blk`)?.checked);
+  const msg = el(`s-${projectId}-msg`);
+  const tblBox = el(`tbl-${projectId}`);
+  msg.textContent = 'กำลังโหลด…'; tblBox.innerHTML = '';
 
-  if(!qCompany){ const saved = localStorage.getItem('companyCode'); if(saved) el('companyCode').value = saved; }
-  if(!qLogin){ const saved = localStorage.getItem('loginId'); if(saved) el('loginId').value = saved; }
-});
+  try{
+    const { data, error } = await sb
+      .from('product_items')
+      .select('id,trade_name,common_name,reg_no,receipt_no,status_step,admin_note,client_note,blocker,blocker_note,updated_at')
+      .eq('project_id', projectId)
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+    let rows = data || [];
+
+    if(kw){
+      rows = rows.filter(x=>{
+        const s = [x.trade_name,x.common_name,x.reg_no,x.receipt_no,x.admin_note,x.client_note,x.blocker_note].filter(Boolean).join(' ').toLowerCase();
+        return s.includes(kw);
+      });
+    }
+    if(st) rows = rows.filter(x => (x.status_step||'') === st);
+    if(bk) rows = rows.filter(x => x.blocker);
+
+    if(!rows.length){
+      tblBox.innerHTML = `<div class="empty">— ไม่พบรายการ —</div>`;
+      msg.textContent = '';
+      return;
+    }
+
+    const html = `
+      <table>
+        <thead>
+          <tr>
+            <th>ชื่อการค้า</th>
+            <th>ชื่อสามัญ</th>
+            <th>ทะเบียน</th>
+            <th>เลขรับ</th>
+            <th>สถานะ</th>
+            <th>ปัญหา</th>
+            <th>หมายเหตุ (ลูกค้าเห็น)</th>
+            <th>อัปเดตล่าสุด</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(x=>`
+            <tr>
+              <td>${escapeHtml(x.trade_name||'-')}</td>
+              <td>${escapeHtml(x.common_name||'-')}</td>
+              <td>${escapeHtml(x.reg_no||'-')}</td>
+              <td>${escapeHtml(x.receipt_no||'-')}</td>
+              <td>${statusChip(x.status_step||'')}</td>
+              <td>${x.blocker ? ('มี' + (x.blocker_note? ' — '+escapeHtml(x.blocker_note):'')) : 'ไม่มี'}</td>
+              <td>${escapeHtml(x.client_note||'-')}</td>
+              <td>${fmtDate(x.updated_at)||'-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    tblBox.innerHTML = html;
+    msg.textContent = `รวม ${rows.length} รายการ`;
+  }catch(e){
+    console.error(e);
+    msg.textContent = 'โหลดรายการไม่ได้';
+  }
+}
+
+/* ===== Timeline (read-only) ===== */
+async function loadTimeline(projectId){
+  const box = el(`tl-${projectId}`); box.innerHTML = '';
+  try{
+    const { data, error } = await sb
+      .from('timeline')
+      .select('id,step,note,created_at')
+      .eq('project_id', projectId)
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+    if(!data || !data.length){
+      box.innerHTML = `<div class="empty">— ยังไม่มีไทม์ไลน์ —</div>`;
+      return;
+    }
+    for(const r of data){
+      const div = document.createElement('div'); div.className='item';
+      div.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+          <div><strong>${escapeHtml(r.step||'-')}</strong></div>
+          <div class="muted">${fmtDate(r.created_at)}</div>
+        </div>
+        ${r.note? `<div class="muted">${escapeHtml(r.note)}</div>`:''}
+      `;
+      box.appendChild(div);
+    }
+  }catch(e){
+    console.error(e);
+    box.innerHTML = `<div class="empty">โหลดไทม์ไลน์ไม่ได้</div>`;
+  }
+}
+
+/* ===== Docs (read-only with Drive/PDF preview) ===== */
+async function loadDocs(projectId){
+  const box = el(`dc-${projectId}`); box.innerHTML = '';
+  try{
+    const { data, error } = await sb
+      .from('documents')
+      .select('id,label,file_path,created_at,public_url,url_override')
+      .eq('project_id', projectId)
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+
+    if(!data || !data.length){
+      box.innerHTML = `<div class="empty">— ยังไม่มีเอกสารแนบ —</div>`;
+      return;
+    }
+
+    for(const d of data){
+      const card = document.createElement('div'); card.className='item';
+      let preview = '';
+      // รองรับ 2 กรณี: อัปโหลดใน Supabase Storage หรือใส่ลิงก์ Drive/PDF (url_override)
+      if(d.url_override && isDriveLink(d.url_override)){
+        const prev = toDrivePreview(d.url_override);
+        preview = `
+          <div class="muted">ไฟล์: <a class="link" href="${escapeHtml(d.url_override)}" target="_blank">เปิดในแท็บใหม่</a></div>
+          <iframe src="${prev}" style="width:100%;height:360px;border:1px solid var(--border);border-radius:10px;background:#000" allow="autoplay"></iframe>
+        `;
+      }else if(d.url_override){
+        // ลิงก์ภายนอกทั่วไป (PDF/เว็บไซต์)
+        preview = `<div class="muted">ไฟล์: <a class="link" href="${escapeHtml(d.url_override)}" target="_blank">${escapeHtml(d.url_override)}</a></div>`;
+      }else if(d.file_path){
+        // ไฟล์ใน Storage (สร้างลิงก์ชั่วคราว)
+        try{
+          const { data: signed } = await sb.storage.from('docs').createSignedUrl(d.file_path, 60*10);
+          const link = signed?.signedUrl || '#';
+          const isPdf = /\.pdf($|\?)/i.test(d.file_path);
+          preview = `
+            <div class="muted">ไฟล์: <a class="link" href="${link}" target="_blank">เปิดไฟล์</a></div>
+            ${ isPdf ? `<iframe src="${link}" style="width:100%;height:360px;border:1px solid var(--border);border-radius:10px;background:#000"></iframe>` : '' }
+          `;
+        }catch(e){
+          preview = `<div class="muted">ไฟล์: เปิดลิงก์ไม่ได้</div>`;
+        }
+      }
+
+      card.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+          <div><strong>${escapeHtml(d.label||'ไฟล์แนบ')}</strong></div>
+          <div class="muted">${fmtDate(d.created_at)}</div>
+        </div>
+        ${preview}
+      `;
+      box.appendChild(card);
+    }
+  }catch(e){
+    console.error(e);
+    box.innerHTML = `<div class="empty">โหลดเอกสารไม่ได้</div>`;
+  }
+}
+
+/* ===== Messages (read-only) ===== */
+async function loadMessages(projectId){
+  const box = el(`mg-${projectId}`); box.innerHTML = '';
+  try{
+    const { data, error } = await sb
+      .from('messages')
+      .select('id,body,by_role,created_at')
+      .eq('project_id', projectId)
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+    if(!data || !data.length){
+      box.innerHTML = `<div class="empty">— ยังไม่มีข้อความ —</div>`;
+      return;
+    }
+    for(const m of data){
+      const card = document.createElement('div'); card.className='item';
+      const role = m.by_role || 'staff';
+      card.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+          <div><strong>[${escapeHtml(role)}]</strong> ${escapeHtml(m.body||'')}</div>
+          <div class="muted">${fmtDate(m.created_at)}</div>
+        </div>
+      `;
+      box.appendChild(card);
+    }
+  }catch(e){
+    console.error(e);
+    box.innerHTML = `<div class="empty">โหลดข้อความไม่ได้</div>`;
+  }
+}
 </script>
 </body>
 </html>
