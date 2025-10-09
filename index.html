@@ -1,103 +1,422 @@
 <!DOCTYPE html>
+
 <html lang="th">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>R. GOOD SERVICE REGISTRATION — Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<title>ระบบติดตามขึ้นทะเบียนทางการเกษตร</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0f172a; --card:#0e1628; --ink:#e5e7eb; --muted:#94a3b8;
-    --border:#1f2937; --accent:#22d3ee;
+:root {
+  --primary: #059669;
+  --primary-dark: #047857;
+  --primary-light: #34d399;
+  --secondary: #3b82f6;
+  --bg-main: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+}
+
+- {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--ink);font-family:'Prompt',system-ui;text-align:center;overflow:hidden}
-  .wrap{max-width:900px;margin:40px auto;padding:20px;}
-  img.logo{width:120px;height:auto;border-radius:12px;margin-bottom:10px;box-shadow:0 0 20px rgba(255,255,255,.15);}
-  h1{font-size:22px;margin:8px 0 4px 0;}
-  .muted{color:var(--muted);font-size:14px;}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-top:24px;box-shadow:0 10px 25px rgba(0,0,0,.2);}
-  .row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px;}
-  input{border-radius:10px;border:1px solid var(--border);background:#071326;color:var(--ink);padding:10px 14px;}
-  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#042a30;border:none;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;}
-  .btn:hover{filter:brightness(1.1);}
-  .outline{background:#071a29;color:#aaf3ff;border:1px solid #10343a;}
-  .footer{margin-top:28px;color:var(--muted);font-size:13px;}
-  @media (max-width:600px){
-    img.logo{width:86px;}
-    h1{font-size:18px;}
-  }
-  /* splash */
-  #splash {
-    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-    flex-direction:column;background:#0b1224;z-index:9999;transition:opacity .8s ease;
-  }
-  #splash img {width:120px;border-radius:12px;animation:spin 4s linear infinite;}
-  #splash h2 {color:#e5e7eb;margin-top:12px;font-weight:600;}
-  @keyframes spin {from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+body {
+font-family: ‘Prompt’, sans-serif;
+min-height: 100vh;
+background: linear-gradient(135deg, #0f766e 0%, #059669 40%, #34d399 100%);
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+position: relative;
+overflow: hidden;
+}
+
+/* Background decorations */
+body::before {
+content: ‘’;
+position: absolute;
+width: 600px;
+height: 600px;
+background: rgba(255,255,255,0.1);
+border-radius: 50%;
+top: -300px;
+right: -300px;
+animation: float 20s ease-in-out infinite;
+}
+
+body::after {
+content: ‘’;
+position: absolute;
+width: 400px;
+height: 400px;
+background: rgba(255,255,255,0.05);
+border-radius: 50%;
+bottom: -200px;
+left: -200px;
+animation: float 15s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+0%, 100% { transform: translateY(0) rotate(0deg); }
+50% { transform: translateY(-30px) rotate(10deg); }
+}
+
+.container {
+position: relative;
+z-index: 1;
+width: 100%;
+max-width: 1000px;
+animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+from {
+opacity: 0;
+transform: translateY(40px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+
+/* Header */
+.header {
+text-align: center;
+margin-bottom: 60px;
+color: white;
+}
+
+.logo {
+width: 120px;
+height: 120px;
+background: rgba(255,255,255,0.15);
+backdrop-filter: blur(10px);
+border-radius: 30px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 64px;
+margin: 0 auto 30px;
+box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+0%, 100% { transform: scale(1); }
+50% { transform: scale(1.05); }
+}
+
+.title {
+font-size: 42px;
+font-weight: 800;
+margin-bottom: 16px;
+text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.subtitle {
+font-size: 20px;
+font-weight: 300;
+opacity: 0.95;
+}
+
+/* Cards Grid */
+.cards-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+gap: 32px;
+margin-bottom: 40px;
+}
+
+/* Card */
+.card {
+background: rgba(255,255,255,0.98);
+border-radius: 24px;
+padding: 40px 32px;
+text-align: center;
+cursor: pointer;
+transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+position: relative;
+overflow: hidden;
+}
+
+.card::before {
+content: ‘’;
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 6px;
+background: linear-gradient(90deg, var(–primary), var(–primary-light));
+transform: scaleX(0);
+transition: transform 0.4s;
+}
+
+.card:hover {
+transform: translateY(-12px);
+box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.card:hover::before {
+transform: scaleX(1);
+}
+
+.card:active {
+transform: translateY(-8px);
+}
+
+.card-icon {
+width: 80px;
+height: 80px;
+background: linear-gradient(135deg, var(–primary), var(–primary-light));
+border-radius: 20px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 40px;
+margin: 0 auto 24px;
+box-shadow: 0 10px 30px rgba(5, 150, 105, 0.3);
+transition: all 0.3s;
+}
+
+.card:hover .card-icon {
+transform: scale(1.1) rotate(5deg);
+box-shadow: 0 15px 40px rgba(5, 150, 105, 0.4);
+}
+
+.card-title {
+font-size: 28px;
+font-weight: 700;
+color: var(–text-primary);
+margin-bottom: 12px;
+}
+
+.card-description {
+font-size: 16px;
+color: var(–text-secondary);
+line-height: 1.6;
+margin-bottom: 24px;
+}
+
+.card-features {
+list-style: none;
+text-align: left;
+margin-bottom: 28px;
+}
+
+.card-features li {
+padding: 8px 0;
+color: var(–text-secondary);
+font-size: 14px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.card-features li::before {
+content: ‘✓’;
+width: 24px;
+height: 24px;
+background: rgba(5, 150, 105, 0.1);
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+color: var(–primary);
+font-weight: 700;
+flex-shrink: 0;
+}
+
+.card-button {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+padding: 14px 32px;
+background: var(–primary);
+color: white;
+border-radius: 12px;
+font-weight: 600;
+font-size: 16px;
+text-decoration: none;
+transition: all 0.3s;
+box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.card:hover .card-button {
+background: var(–primary-dark);
+transform: scale(1.05);
+box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+}
+
+/* Admin Card Specific */
+.card-admin .card-icon {
+background: linear-gradient(135deg, #3b82f6, #60a5fa);
+box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+.card-admin:hover .card-icon {
+box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+}
+
+.card-admin .card-button {
+background: var(–secondary);
+box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.card-admin:hover .card-button {
+background: #2563eb;
+box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.card-admin::before {
+background: linear-gradient(90deg, var(–secondary), #60a5fa);
+}
+
+/* Footer */
+.footer {
+text-align: center;
+color: white;
+font-size: 14px;
+opacity: 0.9;
+}
+
+.footer-divider {
+width: 60px;
+height: 3px;
+background: rgba(255,255,255,0.3);
+margin: 20px auto;
+border-radius: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+.title {
+font-size: 32px;
+}
+
+.subtitle {
+font-size: 16px;
+}
+
+.cards-grid {
+grid-template-columns: 1fr;
+gap: 24px;
+}
+
+.card {
+padding: 32px 24px;
+}
+
+.logo {
+width: 100px;
+height: 100px;
+font-size: 48px;
+}
+}
+
+/* Decorative elements */
+.pattern {
+position: absolute;
+width: 100%;
+height: 100%;
+opacity: 0.05;
+pointer-events: none;
+background-image:
+repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px);
+}
 </style>
+
 </head>
 <body>
-<!-- splash screen -->
-<div id="splash">
-  <img src="https://i.ibb.co/J1KDprF/image.jpg" alt="logo">
-  <h2>กำลังตรวจสอบสิทธิ์เข้าสู่ระบบ...</h2>
-</div>
+  <div class="pattern"></div>
 
-<div class="wrap" id="main" style="display:none;">
-  <img src="https://i.ibb.co/J1KDprF/image.jpg" alt="R. Good Service Logo" class="logo"/>
-  <h1>บริษัท อาร์. กู้ด เซอร์วิส รีจิสเตรชั่น จำกัด</h1>
-  <div class="muted">R. GOOD SERVICE REGISTRATION CO., LTD.</div>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">🌾</div>
+      <h1 class="title">ระบบติดตามขึ้นทะเบียน</h1>
+      <p class="subtitle">ทางการเกษตร - ง่าย รวดเร็ว โปร่งใส</p>
+    </div>
 
-  <div class="card">
-    <h2>เลือกหน้าใช้งาน</h2>
-    <div class="row">
-      <input id="co" placeholder="รหัสบริษัท (เช่น RGD001)">
-      <input id="lid" placeholder="Login ID (ถ้ามี)">
-    </div>
-    <div class="row">
-      <button class="btn" id="goClient">เข้าสู่ระบบลูกค้า</button>
-      <button class="btn outline" id="goAdmin">เข้าสู่ระบบทีมงาน</button>
-    </div>
-    <div class="muted" style="margin-top:8px">
-      * ระบบลูกค้าใช้รหัสบริษัทเพื่อแสดงข้อมูลเฉพาะของบริษัทคุณ
-    </div>
+```
+<!-- Cards Grid -->
+<div class="cards-grid">
+  <!-- Admin Card -->
+  <div class="card card-admin" onclick="window.location.href='admin.html'">
+    <div class="card-icon">👨‍💼</div>
+    <h2 class="card-title">Admin / Staff</h2>
+    <p class="card-description">สำหรับทีมงาน จัดการทุกอย่าง</p>
+    
+    <ul class="card-features">
+      <li>จัดการบริษัทและโปรเจ็กต์</li>
+      <li>เพิ่ม/แก้ไขข้อมูลทั้งหมด</li>
+      <li>สร้างบัญชีลูกค้า</li>
+      <li>ติดตามสถานะ Real-time</li>
+      <li>อัปโหลดเอกสาร</li>
+    </ul>
+    
+    <a href="admin.html" class="card-button">
+      <span>เข้าสู่ระบบแอดมิน</span>
+      <span>→</span>
+    </a>
   </div>
 
-  <div class="footer">
-    <div>ติดต่อ LINE OA: <a href="https://line.me/R/ti/p/@991cyisb" target="_blank">@991cyisb</a></div>
-    <div>© <span id="yy"></span> R. GOOD SERVICE REGISTRATION</div>
+  <!-- Client Card -->
+  <div class="card" onclick="window.location.href='client.html'">
+    <div class="card-icon">👥</div>
+    <h2 class="card-title">Client / ลูกค้า</h2>
+    <p class="card-description">สำหรับลูกค้า ดูสถานะโปรเจ็กต์</p>
+    
+    <ul class="card-features">
+      <li>ดูสถานะโปรเจ็กต์</li>
+      <li>ติดตามความคืบหน้า</li>
+      <li>ดูรายการผลิตภัณฑ์</li>
+      <li>ดาวน์โหลดเอกสาร</li>
+      <li>อัปเดตแบบ Real-time</li>
+    </ul>
+    
+    <a href="client.html" class="card-button">
+      <span>เข้าสู่ระบบลูกค้า</span>
+      <span>→</span>
+    </a>
   </div>
 </div>
 
-<script>
-  // ปุ่มไปลูกค้า/แอดมิน
-  document.getElementById('goClient').addEventListener('click', ()=>{
-    const co=(document.getElementById('co').value||'').trim();
-    const lid=(document.getElementById('lid').value||'').trim();
-    const params=new URLSearchParams();
-    if(co) params.set('company', co);
-    if(lid) params.set('login', lid);
-    location.href='client.html' + (params.toString()?('?'+params.toString()):'');
-  });
-  document.getElementById('goAdmin').addEventListener('click', ()=>{
-    location.href='admin.html';
-  });
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-divider"></div>
+  <p>🌱 ระบบบริหารจัดการขึ้นทะเบียนผลิตภัณฑ์ทางการเกษตร</p>
+  <p style="margin-top: 8px; opacity: 0.7;">Powered by Modern Web Technology</p>
+</div>
+```
 
-  // ปีลิขสิทธิ์
-  document.getElementById('yy').textContent=new Date().getFullYear();
+  </div>
 
-  // splash fade out
-  window.addEventListener('load', ()=>{
-    setTimeout(()=>{
-      const sp=document.getElementById('splash');
-      sp.style.opacity='0';
-      setTimeout(()=>{
-        sp.remove();
-        document.getElementById('main').style.display='block';
-      },800);
-    },1600);
-  });
-</script>
+  <script>
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '1') {
+        window.location.href = 'admin.html';
+      } else if (e.key === '2') {
+        window.location.href = 'client.html';
+      }
+    });
+
+    // Prevent click event from firing twice
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') {
+          e.stopPropagation();
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>
