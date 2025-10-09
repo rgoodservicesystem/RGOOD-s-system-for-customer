@@ -1,497 +1,1322 @@
 <!DOCTYPE html>
+
 <html lang="th">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ลูกค้า — ติดตามงานขึ้นทะเบียน (View Only)</title>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<title>ติดตามสถานะโปรเจ็กต์ - ลูกค้า (client.html)</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f172a; --card:#0e1628; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --accent:#22d3ee;
-    --ok:#10b981; --warn:#f59e0b; --err:#ef4444;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:linear-gradient(180deg,#0b1224,#0f172a);color:var(--ink);font-family:'Prompt',system-ui}
-  .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
-  header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .brand{display:flex;gap:10px;align-items:center}
-  img.logo{width:44px;height:44px;border-radius:10px;box-shadow:0 0 16px rgba(255,255,255,.12)}
-  h1{font-size:20px;margin:0}
-  .muted{color:var(--muted);font-size:13px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 10px 26px rgba(0,0,0,.24)}
-  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-  input,select{background:#071326;color:var(--ink);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
-  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#072027;border:1px solid #10343a;font-size:12px}
-  .list{display:flex;flex-direction:column;gap:10px}
-  .item{background:#0b1220;border:1px solid var(--border);border-radius:14px;padding:12px}
-  .item h3{margin:0 0 6px 0;font-size:16px}
-  .section{margin-top:10px}
-  .section h4{margin:0 0 6px 0;font-size:14px}
-  .pill{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
-  .st-wait{background:rgba(148,163,184,.16);color:#cbd5e1}
-  .st-pre{background:rgba(37,99,235,.14);color:#93c5fd}
-  .st-sub{background:rgba(34,211,238,.14);color:#67e8f9}
-  .st-pend{background:rgba(245,158,11,.14);color:#fbbf24}
-  .st-done{background:rgba(16,185,129,.14);color:#34d399}
-  .st-rej{background:rgba(239,68,68,.14);color:#f87171}
-  .kbar{display:flex;gap:8px;flex-wrap:wrap}
-  table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-  th,td{border-bottom:1px solid var(--border);padding:10px;font-size:13px;text-align:left}
-  th{background:#0a192f;color:#cbd5e1}
-  .hint{font-size:12px;color:var(--muted)}
-  .link{color:#7dd3fc}
-  .center{display:flex;align-items:center;justify-content:center}
-  .empty{padding:16px;border:1px dashed #2b3c52;border-radius:12px;text-align:center;color:#9fb3c8}
-  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;background:#0b2237;border:1px solid #14344c;border-radius:999px;font-size:12px}
-  /* accordion */
-  .acc{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#0b1220}
-  .acc-h{display:flex;align-items:center;justify-content:space-between;padding:12px;cursor:pointer}
-  .acc-h:hover{background:#0c1930}
-  .acc-b{display:none;padding:12px;border-top:1px solid var(--border);background:#0b1220}
-  .acc.open .acc-b{display:block}
-  /* splash */
-  #splash{position:fixed;inset:0;background:#0b1224;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
-  #splash img{width:100px;border-radius:12px;animation:spin 4s linear infinite}
-  #splash h2{margin-top:10px;font-size:16px;color:#dbeafe}
-  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+:root {
+  --primary: #059669;
+  --primary-dark: #047857;
+  --secondary: #3b82f6;
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+  --success: #10b981;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+font-family: ‘Prompt’, sans-serif;
+background: var(–bg-main);
+color: var(–text-primary);
+line-height: 1.6;
+}
+
+.page {
+display: none;
+animation: fadeIn 0.4s ease-in-out;
+}
+
+.page.active {
+display: block;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* Login Page */
+.login-page {
+min-height: 100vh;
+display: flex;
+align-items: center;
+justify-content: center;
+background: linear-gradient(135deg, #0f766e 0%, #059669 50%, #34d399 100%);
+padding: 20px;
+position: relative;
+overflow: hidden;
+}
+
+.login-page::before {
+content: ‘’;
+position: absolute;
+width: 500px;
+height: 500px;
+background: rgba(255,255,255,0.1);
+border-radius: 50%;
+top: -250px;
+right: -250px;
+}
+
+.login-page::after {
+content: ‘’;
+position: absolute;
+width: 400px;
+height: 400px;
+background: rgba(255,255,255,0.05);
+border-radius: 50%;
+bottom: -200px;
+left: -200px;
+}
+
+.login-container {
+position: relative;
+z-index: 1;
+width: 100%;
+max-width: 480px;
+}
+
+.login-card {
+background: var(–bg-card);
+padding: 48px 40px;
+border-radius: 24px;
+box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.login-header {
+text-align: center;
+margin-bottom: 40px;
+}
+
+.login-icon {
+width: 80px;
+height: 80px;
+background: linear-gradient(135deg, var(–primary), #34d399);
+border-radius: 20px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 40px;
+margin: 0 auto 20px;
+box-shadow: 0 10px 30px rgba(5, 150, 105, 0.3);
+}
+
+.login-title {
+font-size: 28px;
+font-weight: 700;
+color: var(–text-primary);
+margin-bottom: 8px;
+}
+
+.login-subtitle {
+color: var(–text-secondary);
+font-size: 15px;
+}
+
+.input-group {
+margin-bottom: 24px;
+}
+
+.input-label {
+display: block;
+margin-bottom: 8px;
+color: var(–text-primary);
+font-weight: 500;
+font-size: 14px;
+}
+
+.input-wrapper {
+position: relative;
+}
+
+.input-icon {
+position: absolute;
+left: 16px;
+top: 50%;
+transform: translateY(-50%);
+color: var(–text-secondary);
+font-size: 18px;
+}
+
+.form-input {
+width: 100%;
+padding: 14px 16px 14px 48px;
+border: 2px solid var(–border);
+border-radius: 12px;
+font-size: 15px;
+font-family: ‘Prompt’, sans-serif;
+transition: all 0.3s;
+background: var(–bg-main);
+}
+
+.form-input:focus {
+outline: none;
+border-color: var(–primary);
+background: white;
+box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+}
+
+.btn {
+padding: 14px 24px;
+border-radius: 12px;
+border: none;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.3s;
+font-family: ‘Prompt’, sans-serif;
+font-size: 15px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+}
+
+.btn-primary {
+background: var(–primary);
+color: white;
+width: 100%;
+padding: 16px;
+font-size: 16px;
+}
+
+.btn-primary:hover {
+background: var(–primary-dark);
+transform: translateY(-2px);
+box-shadow: 0 10px 30px rgba(5, 150, 105, 0.3);
+}
+
+.btn-primary:disabled {
+opacity: 0.6;
+cursor: not-allowed;
+transform: none;
+}
+
+.btn-outline {
+background: transparent;
+border: 2px solid var(–border);
+color: var(–text-primary);
+}
+
+.btn-outline:hover {
+border-color: var(–primary);
+background: rgba(5, 150, 105, 0.05);
+}
+
+.alert {
+margin-top: 20px;
+padding: 14px 16px;
+border-radius: 12px;
+font-size: 14px;
+text-align: center;
+animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+from { opacity: 0; transform: translateY(-10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.alert-error {
+background: #fee;
+color: #ef4444;
+border: 1px solid #fcc;
+}
+
+.alert-success {
+background: #efe;
+color: var(–success);
+border: 1px solid #cfc;
+}
+
+/* Main App */
+.app-page {
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+}
+
+.header {
+background: var(–bg-card);
+border-bottom: 1px solid var(–border);
+padding: 20px 24px;
+box-shadow: var(–shadow);
+position: sticky;
+top: 0;
+z-index: 100;
+}
+
+.header-content {
+max-width: 1200px;
+margin: 0 auto;
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 20px;
+flex-wrap: wrap;
+}
+
+.header-left {
+display: flex;
+align-items: center;
+gap: 16px;
+}
+
+.header-logo {
+width: 48px;
+height: 48px;
+background: linear-gradient(135deg, var(–primary), #34d399);
+border-radius: 12px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 24px;
+box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+}
+
+.header-title {
+font-size: 20px;
+color: var(–primary);
+font-weight: 700;
+}
+
+.header-right {
+display: flex;
+gap: 12px;
+align-items: center;
+flex-wrap: wrap;
+}
+
+.badge {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 8px 16px;
+border-radius: 20px;
+font-size: 13px;
+font-weight: 500;
+background: #e0f2fe;
+color: #0369a1;
+}
+
+.container {
+flex: 1;
+max-width: 1200px;
+margin: 0 auto;
+padding: 32px 24px;
+width: 100%;
+}
+
+.welcome-card {
+background: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(52, 211, 153, 0.05));
+border: 2px solid var(–primary);
+border-radius: 20px;
+padding: 32px;
+margin-bottom: 32px;
+text-align: center;
+}
+
+.welcome-card h2 {
+font-size: 28px;
+color: var(–primary);
+margin-bottom: 12px;
+}
+
+.welcome-card p {
+color: var(–text-secondary);
+font-size: 16px;
+}
+
+.projects-section {
+margin-bottom: 32px;
+}
+
+.section-title {
+font-size: 24px;
+font-weight: 700;
+color: var(–text-primary);
+margin-bottom: 20px;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.projects-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+gap: 20px;
+}
+
+.project-card {
+background: var(–bg-card);
+border: 2px solid var(–border);
+border-radius: 16px;
+padding: 24px;
+cursor: pointer;
+transition: all 0.3s;
+position: relative;
+overflow: hidden;
+}
+
+.project-card::before {
+content: ‘’;
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 4px;
+background: linear-gradient(90deg, var(–primary), #34d399);
+transform: scaleX(0);
+transition: transform 0.3s;
+}
+
+.project-card:hover {
+transform: translateY(-8px);
+box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+border-color: var(–primary);
+}
+
+.project-card:hover::before {
+transform: scaleX(1);
+}
+
+.project-card.selected {
+border-color: var(–primary);
+background: linear-gradient(135deg, rgba(5, 150, 105, 0.05), rgba(52, 211, 153, 0.03));
+box-shadow: 0 8px 24px rgba(5, 150, 105, 0.15);
+}
+
+.project-card.selected::before {
+transform: scaleX(1);
+}
+
+.project-header {
+display: flex;
+justify-content: space-between;
+align-items: start;
+margin-bottom: 16px;
+gap: 12px;
+}
+
+.project-title {
+font-size: 18px;
+font-weight: 600;
+color: var(–text-primary);
+flex: 1;
+line-height: 1.4;
+}
+
+.status-badge {
+padding: 6px 14px;
+border-radius: 12px;
+font-size: 12px;
+font-weight: 600;
+white-space: nowrap;
+}
+
+.status-waiting_docs { background: #fef3c7; color: #92400e; }
+.status-precheck { background: #dbeafe; color: #1e40af; }
+.status-submitted { background: #e0e7ff; color: #4338ca; }
+.status-pending_result { background: #fce7f3; color: #9f1239; }
+.status-done { background: #d1fae5; color: #065f46; }
+.status-rejected { background: #fee2e2; color: #991b1b; }
+
+.project-meta {
+display: flex;
+gap: 16px;
+color: var(–text-secondary);
+font-size: 13px;
+}
+
+.meta-item {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+/* Detail Panel */
+.detail-panel {
+background: var(–bg-card);
+border-radius: 20px;
+padding: 32px;
+box-shadow: var(–shadow-lg);
+border: 2px solid var(–border);
+display: none;
+margin-top: 32px;
+}
+
+.detail-panel.show {
+display: block;
+animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+from { opacity: 0; transform: translateY(30px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-header {
+margin-bottom: 32px;
+padding-bottom: 24px;
+border-bottom: 2px solid var(–border);
+}
+
+.detail-title {
+font-size: 28px;
+font-weight: 700;
+color: var(–text-primary);
+margin-bottom: 16px;
+}
+
+.detail-meta {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+}
+
+.section {
+margin-bottom: 40px;
+}
+
+.section-header {
+font-size: 20px;
+font-weight: 600;
+color: var(–text-primary);
+margin-bottom: 20px;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.section-icon {
+width: 40px;
+height: 40px;
+background: linear-gradient(135deg, var(–primary), #34d399);
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+color: white;
+font-size: 18px;
+box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+}
+
+/* Timeline */
+.timeline {
+position: relative;
+padding-left: 40px;
+margin-top: 24px;
+}
+
+.timeline::before {
+content: ‘’;
+position: absolute;
+left: 12px;
+top: 0;
+bottom: 0;
+width: 3px;
+background: linear-gradient(180deg, var(–primary), #34d399);
+}
+
+.timeline-item {
+position: relative;
+margin-bottom: 24px;
+padding: 20px;
+background: var(–bg-main);
+border-radius: 12px;
+border-left: 4px solid var(–primary);
+}
+
+.timeline-item::before {
+content: ‘’;
+position: absolute;
+left: -48px;
+top: 24px;
+width: 20px;
+height: 20px;
+background: var(–primary);
+border-radius: 50%;
+border: 4px solid var(–bg-card);
+box-shadow: 0 0 0 2px var(–primary);
+}
+
+.timeline-step {
+font-weight: 600;
+color: var(–text-primary);
+margin-bottom: 8px;
+font-size: 15px;
+}
+
+.timeline-note {
+color: var(–text-secondary);
+font-size: 14px;
+margin-bottom: 8px;
+line-height: 1.6;
+}
+
+.timeline-date {
+color: var(–text-secondary);
+font-size: 12px;
+font-weight: 500;
+}
+
+/* Messages */
+.message-list {
+display: flex;
+flex-direction: column;
+gap: 16px;
+margin-top: 24px;
+}
+
+.message-item {
+padding: 20px;
+background: var(–bg-main);
+border-radius: 12px;
+border-left: 4px solid var(–secondary);
+}
+
+.message-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 12px;
+}
+
+.message-role {
+font-weight: 600;
+color: var(–secondary);
+font-size: 14px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.message-date {
+color: var(–text-secondary);
+font-size: 12px;
+}
+
+.message-body {
+color: var(–text-primary);
+line-height: 1.6;
+}
+
+/* Documents */
+.doc-list {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+gap: 16px;
+margin-top: 24px;
+}
+
+.doc-item {
+padding: 20px;
+background: var(–bg-main);
+border: 2px solid var(–border);
+border-radius: 12px;
+transition: all 0.3s;
+}
+
+.doc-item:hover {
+border-color: var(–primary);
+box-shadow: var(–shadow);
+transform: translateY(-4px);
+}
+
+.doc-label {
+font-weight: 600;
+color: var(–text-primary);
+margin-bottom: 8px;
+font-size: 15px;
+}
+
+.doc-date {
+color: var(–text-secondary);
+font-size: 12px;
+margin-bottom: 16px;
+}
+
+/* Products */
+.product-item {
+padding: 24px;
+background: var(–bg-main);
+border: 2px solid var(–border);
+border-radius: 16px;
+margin-bottom: 20px;
+}
+
+.product-header {
+display: flex;
+justify-content: space-between;
+align-items: start;
+margin-bottom: 20px;
+gap: 16px;
+}
+
+.product-names h3 {
+font-size: 18px;
+color: var(–text-primary);
+margin-bottom: 6px;
+}
+
+.product-common {
+color: var(–text-secondary);
+font-size: 14px;
+}
+
+.blocker-badge {
+background: #ef4444;
+color: white;
+padding: 8px 16px;
+border-radius: 10px;
+font-size: 13px;
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.product-fields {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 16px;
+margin-bottom: 16px;
+}
+
+.field-item {
+padding: 12px;
+background: white;
+border-radius: 8px;
+border: 1px solid var(–border);
+}
+
+.field-label {
+font-size: 11px;
+color: var(–text-secondary);
+margin-bottom: 4px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.field-value {
+font-size: 14px;
+color: var(–text-primary);
+font-weight: 500;
+}
+
+.empty-state {
+text-align: center;
+padding: 80px 20px;
+color: var(–text-secondary);
+}
+
+.empty-icon {
+font-size: 72px;
+margin-bottom: 20px;
+opacity: 0.3;
+}
+
+.empty-text {
+font-size: 16px;
+line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+.header-content {
+flex-direction: column;
+align-items: flex-start;
+}
+
+.projects-grid {
+grid-template-columns: 1fr;
+}
+
+.product-fields {
+grid-template-columns: 1fr;
+}
+
+.login-card {
+padding: 32px 24px;
+}
+}
 </style>
+
 </head>
 <body>
-<!-- Splash -->
-<div id="splash">
-  <img src="https://i.ibb.co/J1KDprF/image.jpg" alt="logo">
-  <h2>กำลังตรวจสอบสิทธิ์ลูกค้า…</h2>
+
+<!-- Login Page -->
+
+<div class="page active" id="loginPage">
+  <div class="login-page">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-icon">🌾</div>
+          <h1 class="login-title">ระบบติดตามสถานะ</h1>
+          <p class="login-subtitle">สำหรับลูกค้า</p>
+        </div>
+
+```
+    <div class="input-group">
+      <label class="input-label">อีเมล</label>
+      <div class="input-wrapper">
+        <span class="input-icon">👤</span>
+        <input type="email" id="email" class="form-input" placeholder="your@email.com" autocomplete="email">
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label class="input-label">รหัสผ่าน</label>
+      <div class="input-wrapper">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+      </div>
+    </div>
+    
+    <button class="btn btn-primary" id="btnSignIn">
+      <span>เข้าสู่ระบบ</span>
+      <span>→</span>
+    </button>
+    
+    <div id="authMsg"></div>
+  </div>
+</div>
+```
+
+  </div>
 </div>
 
-<div class="wrap" id="app" style="display:none">
-  <header>
-    <div class="brand">
-      <img class="logo" src="https://i.ibb.co/J1KDprF/image.jpg" alt="logo">
-      <div>
-        <h1>พอร์ทัลลูกค้า — ระบบติดตามงานขึ้นทะเบียน</h1>
-        <div class="muted" id="who"></div>
-      </div>
-    </div>
-    <div class="row">
-      <a class="chip" href="index.html">← กลับหน้าแรก</a>
-      <a class="chip" target="_blank" href="https://line.me/R/ti/p/@991cyisb">LINE OA: @991cyisb</a>
-    </div>
-  </header>
+<!-- Main App Page -->
 
-  <!-- แถบค้นหา/ตัวกรองระดับบริษัท -->
-  <div class="card">
-    <div class="row" style="justify-content:space-between;align-items:flex-end">
-      <div>
-        <div class="muted">บริษัท:</div>
-        <div class="row" id="companyBadges"></div>
-      </div>
-      <div class="row">
-        <input id="q" placeholder="ค้นหาโปรเจ็กต์/บริษัท/โค้ด…">
-        <button id="btnRefresh">รีเฟรช</button>
+<div class="page" id="appPage">
+  <div class="app-page">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="header-logo">🌾</div>
+          <h1 class="header-title">ติดตามสถานะโปรเจ็กต์</h1>
+        </div>
+        <div class="header-right">
+          <span class="badge" id="userEmail">👤 —</span>
+          <button class="btn btn-outline" id="btnSignOut">
+            <span>ออกจากระบบ</span>
+            <span>→</span>
+          </button>
+        </div>
       </div>
     </div>
+
+```
+<!-- Main Content -->
+<div class="container">
+  <!-- Welcome Card -->
+  <div class="welcome-card">
+    <h2>ยินดีต้อนรับ</h2>
+    <p id="companyName">กำลังโหลดข้อมูล...</p>
   </div>
 
-  <!-- รายการโปรเจ็กต์ -->
-  <div class="section">
-    <h4>โปรเจ็กต์ของบริษัทคุณ</h4>
-    <div id="projects" class="list"></div>
-    <div id="projMsg" class="hint" style="margin-top:8px"></div>
+  <!-- Projects Section -->
+  <div class="projects-section">
+    <div class="section-title">
+      <span>📋</span>
+      <span>โปรเจ็กต์ของคุณ</span>
+    </div>
+    <div class="projects-grid" id="projectsList"></div>
+  </div>
+
+  <!-- Project Detail -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <div class="detail-title" id="detailTitle">—</div>
+      <div class="detail-meta" id="detailMeta"></div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">⏱️</div>
+        <span>ไทม์ไลน์การดำเนินการ</span>
+      </div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <!-- Messages -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">💬</div>
+        <span>ข้อความจากทีมงาน</span>
+      </div>
+      <div class="message-list" id="messages"></div>
+    </div>
+
+    <!-- Documents -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">📎</div>
+        <span>เอกสาร</span>
+      </div>
+      <div class="doc-list" id="docs"></div>
+    </div>
+
+    <!-- Products -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon">📦</div>
+        <span>รายการผลิตภัณฑ์/ทะเบียน</span>
+      </div>
+      
+      <!-- Search Bar for Products -->
+      <div style="position: relative; margin-bottom: 20px;">
+        <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text-secondary);">🔍</span>
+        <input 
+          type="text" 
+          id="productSearch" 
+          placeholder="ค้นหาชื่อการค้า, ชื่อสามัญ, ทะเบียน, เลขรับ..." 
+          style="width: 100%; padding: 12px 16px 12px 48px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-family: 'Prompt', sans-serif; transition: all 0.3s;"
+          onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(5, 150, 105, 0.1)';"
+          onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';"
+        >
+      </div>
+      
+      <div id="items"></div>
+    </div>
+  </div>
+</div>
+```
+
   </div>
 </div>
 
 <script>
-/* ===== Config: ใช้ของคุณที่ให้มา ===== */
 const SUPABASE_URL = 'https://jlrogimfjmtwdqiuyejj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impscm9naW1mam10d2RxaXV5ZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NDIyODUsImV4cCI6MjA3NTUxODI4NX0.OvX7qgcIF5aCcLebUEUR_6D2KTUP2pALCjRtHWJ5qZg';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ===== Utils ===== */
-const qs = new URLSearchParams(location.search);
-const COMPANY_CODE = (qs.get('company')||'').trim();
-const LOGIN_ID = (qs.get('login')||'').trim();
+let currentUser = null;
+let currentCompanyId = null;
+let selectedProject = null;
+
 const el = id => document.getElementById(id);
-const fmtDate = d => { if(!d) return '-'; const x=new Date(d); if(isNaN(x)) return '-'; return x.toLocaleDateString('th-TH'); };
-function statusChip(s){
+const esc = s => (s ?? '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el(pageId).classList.add('active');
+}
+
+function showMsg(id, text, type = '') {
+  const n = el(id);
+  if (!n) return;
+  if (!text) {
+    n.innerHTML = '';
+    return;
+  }
+  n.innerHTML = `<div class="alert alert-${type || 'info'}">${text}</div>`;
+}
+
+function getStatusText(status) {
   const map = {
-    waiting_docs: ['st-wait','รอเอกสาร'],
-    precheck: ['st-pre','ตรวจเบื้องต้น'],
-    submitted: ['st-sub','ยื่นแล้ว'],
-    pending_result: ['st-pend','รอผล'],
-    done: ['st-done','เสร็จสิ้น'],
-    rejected: ['st-rej','ถูกตีกลับ']
+    waiting_docs: 'รอเอกสาร',
+    precheck: 'ตรวจเบื้องต้น',
+    submitted: 'ยื่นแล้ว',
+    pending_result: 'รอผล',
+    done: 'เสร็จสิ้น',
+    rejected: 'ถูกตีกลับ'
   };
-  const [cls,txt] = map[s] || ['st-wait', s||'-'];
-  return `<span class="pill ${cls}">${txt}</span>`;
+  return map[status] || status;
 }
-function isDriveLink(url){ return /https?:\/\/(drive\.google\.com|docs\.google\.com)/i.test(url||''); }
-function toDrivePreview(url){
-  if(!url) return '';
-  const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if(m) return `https://drive.google.com/file/d/${m[1]}/preview`;
-  if(url.includes('docs.google.com')) return url.replace(/\/edit.*$/,'/pub?embedded=true');
-  return url;
-}
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
 
-/* ===== State ===== */
-let company = null;         // {id,name,code}
-let client = null;          // {id,login_id,display_name}
-let projects = [];          // list of projects
-
-/* ===== Boot: verify client ===== */
-(async function boot(){
-  if(!COMPANY_CODE || !LOGIN_ID){
-    alert('ลิงก์ไม่ครบ: ต้องมี ?company=รหัสบริษัท&login=ไอดีลูกค้า');
+/* Auth */
+async function signIn() {
+  const email = el('email').value.trim();
+  const password = el('password').value;
+  
+  if (!email || !password) {
+    showMsg('authMsg', 'กรุณากรอกอีเมลและรหัสผ่าน', 'error');
     return;
   }
-  try{
-    // หา company
-    const { data:co, error:ce } = await sb.from('companies').select('id,name,code').eq('code', COMPANY_CODE).maybeSingle();
-    if(ce) throw ce;
-    if(!co){ alert('ไม่พบบริษัทตามรหัสที่ให้'); return; }
-    company = co;
-
-    // ตรวจ client (ต้องมีในตาราง clients และ is_active = true)
-    const { data:cl, error:cle } = await sb
-      .from('clients')
-      .select('id,login_id,display_name,is_active')
-      .eq('company_id', company.id)
-      .eq('login_id', LOGIN_ID)
-      .eq('is_active', true)
-      .maybeSingle();
-    if(cle) throw cle;
-    if(!cl){ alert('รหัสลูกค้าไม่ถูกต้อง หรือถูกปิดใช้งาน'); return; }
-    client = cl;
-
-    // UI header
-    el('who').textContent = `บริษัท: ${company.name} (รหัส ${company.code}) • ผู้เข้าใช้: ${client.display_name||client.login_id} — โหมดอ่านอย่างเดียว`;
-
-    // load projects
-    await loadProjects();
-
-    // splash → app
-    document.getElementById('splash').style.display='none';
-    document.getElementById('app').style.display='block';
-
-    // search
-    el('btnRefresh').onclick = loadProjects;
-    el('q').oninput = filterProjectsPaint;
-  }catch(e){
-    console.error(e);
-    alert('เกิดข้อผิดพลาดในการเข้าถึงข้อมูลลูกค้า');
-  }
-})();
-
-/* ===== Load projects of this company ===== */
-async function loadProjects(){
-  const box = el('projects'); box.innerHTML = '';
-  el('projMsg').textContent = 'กำลังโหลด…';
-  try{
-    // โปรเจ็กต์ทั้งหมดของบริษัทนี้
-    let { data:rows, error } = await sb
-      .from('projects')
-      .select('id,title,status,due_date,companies:company_id(name,code)')
-      .eq('company_id', company.id)
-      .order('created_at',{ascending:false});
-    if(error) throw error;
-    projects = rows || [];
-
-    // paint
-    paintCompanyBadges();
-    filterProjectsPaint();
-    el('projMsg').textContent = `รวม ${projects.length} โปรเจ็กต์`;
-  }catch(e){
-    console.error(e);
-    el('projMsg').textContent = 'โหลดโปรเจ็กต์ไม่ได้';
+  
+  const btn = el('btnSignIn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>กำลังเข้าสู่ระบบ...</span>';
+  
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    showMsg('authMsg', 'เข้าสู่ระบบสำเร็จ!', 'success');
+  } catch (e) {
+    showMsg('authMsg', 'เข้าสู่ระบบไม่สำเร็จ: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<span>เข้าสู่ระบบ</span><span>→</span>';
   }
 }
 
-function paintCompanyBadges(){
-  const area = document.getElementById('companyBadges');
-  area.innerHTML = `
-    <span class="badge">บริษัท: ${escapeHtml(company?.name||'-')}</span>
-    <span class="badge">รหัส: ${escapeHtml(company?.code||'-')}</span>
-    <span class="badge">ลูกค้า: ${escapeHtml(client?.display_name||client?.login_id||'-')}</span>
+async function signOut() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function checkAuth() {
+  const { data: s } = await sb.auth.getSession();
+  if (!s.session) {
+    showPage('loginPage');
+    return false;
+  }
+  
+  currentUser = s.session.user;
+  
+  // Get membership and company_id
+  const { data, error } = await sb
+    .from('memberships')
+    .select('role, company_id')
+    .eq('user_id', currentUser.id)
+    .limit(1);
+    
+  if (error || !data || data.length === 0) {
+    showMsg('authMsg', 'บัญชีนี้ไม่มีสิทธิ์เข้าถึง', 'error');
+    showPage('loginPage');
+    return false;
+  }
+  
+  const membership = data[0];
+  
+  // Only allow client role
+  if (membership.role !== 'client') {
+    showMsg('authMsg', 'หน้านี้สำหรับลูกค้าเท่านั้น', 'error');
+    showPage('loginPage');
+    return false;
+  }
+  
+  currentCompanyId = membership.company_id;
+  
+  if (!currentCompanyId) {
+    showMsg('authMsg', 'บัญชีนี้ยังไม่ได้เชื่อมโยงกับบริษัท', 'error');
+    showPage('loginPage');
+    return false;
+  }
+  
+  el('userEmail').textContent = '👤 ' + currentUser.email;
+  
+  // Load company name
+  const { data: company } = await sb
+    .from('companies')
+    .select('name')
+    .eq('id', currentCompanyId)
+    .single();
+    
+  if (company) {
+    el('companyName').textContent = company.name;
+  }
+  
+  showPage('appPage');
+  await loadProjects();
+  
+  return true;
+}
+
+/* Projects */
+async function loadProjects() {
+  if (!currentCompanyId) return;
+  
+  const { data, error } = await sb
+    .from('projects')
+    .select('id, title, status, due_date')
+    .eq('company_id', currentCompanyId)
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error('Load projects error:', error);
+    return;
+  }
+  
+  const list = el('projectsList');
+  
+  if (!data || data.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1;">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">ยังไม่มีโปรเจ็กต์</div>
+      </div>
+    `;
+    return;
+  }
+  
+  list.innerHTML = data.map(project => `
+    <div class="project-card" onclick="selectProject(${JSON.stringify(project).replace(/"/g, '&quot;')})">
+      <div class="project-header">
+        <div class="project-title">${esc(project.title)}</div>
+        <div class="status-badge status-${project.status}">
+          ${getStatusText(project.status)}
+        </div>
+      </div>
+      <div class="project-meta">
+        <div class="meta-item">
+          📅 ${project.due_date || 'ไม่ระบุ'}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function selectProject(project) {
+  selectedProject = project;
+  
+  document.querySelectorAll('.project-card').forEach(c => c.classList.remove('selected'));
+  event.target.closest('.project-card')?.classList.add('selected');
+  
+  el('detailPanel').classList.add('show');
+  el('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  
+  el('detailTitle').textContent = project.title;
+  el('detailMeta').innerHTML = `
+    <span class="status-badge status-${project.status}">${getStatusText(project.status)}</span>
+    <span class="badge" style="background: #e0e7ff; color: #4338ca;">📅 ${project.due_date || 'ไม่ระบุ'}</span>
   `;
+  
+  await loadTimeline();
+  await loadMessages();
+  await loadDocs();
+  await loadItems();
 }
 
-/* ===== Paint projects with accordion ===== */
-function filterProjectsPaint(){
-  const q = (el('q').value||'').toLowerCase();
-  const box = el('projects'); box.innerHTML = '';
-
-  const list = (projects||[]).filter(p=>{
-    if(!q) return true;
-    const s = `${p.title||''} ${p.status||''} ${p.companies?.name||''} ${p.companies?.code||''}`.toLowerCase();
-    return s.includes(q);
-  });
-
-  if(!list.length){
-    box.innerHTML = `<div class="empty">— ไม่พบโปรเจ็กต์ที่ตรงกับคำค้น —</div>`;
+/* Timeline */
+async function loadTimeline() {
+  if (!selectedProject) return;
+  
+  const { data, error } = await sb.from('timeline')
+    .select('*')
+    .eq('project_id', selectedProject.id)
+    .order('created_at', { ascending: false });
+    
+  if (error) return;
+  
+  const container = el('timeline');
+  
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-text">ยังไม่มีไทม์ไลน์</div></div>';
     return;
   }
+  
+  container.innerHTML = data.map(t => `
+    <div class="timeline-item">
+      <div class="timeline-step">${esc(t.step)}</div>
+      ${t.note ? `<div class="timeline-note">${esc(t.note)}</div>` : ''}
+      <div class="timeline-date">${new Date(t.created_at).toLocaleString('th-TH')}</div>
+    </div>
+  `).join('');
+}
 
-  for(const p of list){
-    const acc = document.createElement('div'); acc.className='acc';
-    acc.innerHTML = `
-      <div class="acc-h">
-        <div class="row">
-          <h3>${escapeHtml(p.title||'-')}</h3>
-          <span class="pill">${statusChip(p.status)}</span>
-          <span class="badge">กำหนดส่ง: ${fmtDate(p.due_date)||'-'}</span>
-        </div>
-        <div class="muted">คลิกเพื่อดูรายละเอียด</div>
+/* Messages */
+async function loadMessages() {
+  if (!selectedProject) return;
+  
+  const { data, error } = await sb.from('messages')
+    .select('*')
+    .eq('project_id', selectedProject.id)
+    .order('created_at', { ascending: false });
+    
+  if (error) return;
+  
+  const container = el('messages');
+  
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-text">ยังไม่มีข้อความ</div></div>';
+    return;
+  }
+  
+  container.innerHTML = data.map(m => `
+    <div class="message-item">
+      <div class="message-header">
+        <div class="message-role">👤 ทีมงาน</div>
+        <div class="message-date">${new Date(m.created_at).toLocaleString('th-TH')}</div>
       </div>
-      <div class="acc-b">
-        <div class="section">
-          <h4>รายการผลิตภัณฑ์/ทะเบียน</h4>
-          <div class="kbar">
-            <input id="s-${p.id}-kw" placeholder="ค้นหา: ชื่อการค้า/ชื่อสามัญ/ทะเบียน/เลขรับ" style="flex:1;min-width:260px">
-            <select id="s-${p.id}-st">
-              <option value="">ทุกสถานะ</option>
-              <option value="waiting_docs">รอเอกสาร</option>
-              <option value="precheck">ตรวจเบื้องต้น</option>
-              <option value="submitted">ยื่นแล้ว</option>
-              <option value="pending_result">รอผล</option>
-              <option value="done">เสร็จสิ้น</option>
-              <option value="rejected">ถูกตีกลับ</option>
-            </select>
-            <label class="badge"><input type="checkbox" id="s-${p.id}-blk"> เฉพาะที่มีปัญหา</label>
-            <span class="muted" id="s-${p.id}-msg"></span>
+      <div class="message-body">${esc(m.body)}</div>
+    </div>
+  `).join('');
+}
+
+/* Documents */
+async function loadDocs() {
+  if (!selectedProject) return;
+  
+  const { data, error } = await sb.from('documents')
+    .select('*')
+    .eq('project_id', selectedProject.id)
+    .order('created_at', { ascending: false });
+    
+  if (error) return;
+  
+  const container = el('docs');
+  
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-text">ยังไม่มีเอกสาร</div></div>';
+    return;
+  }
+  
+  const html = await Promise.all(data.map(async doc => {
+    const { data: signed } = await sb.storage
+      .from('docs')
+      .createSignedUrl(doc.file_path, 600);
+      
+    return `
+      <div class="doc-item">
+        <div class="doc-label">📄 ${esc(doc.label)}</div>
+        <div class="doc-date">${new Date(doc.created_at).toLocaleString('th-TH')}</div>
+        <a href="${signed?.signedUrl || '#'}" target="_blank" class="btn btn-outline" style="width: 100%;">
+          เปิดไฟล์ →
+        </a>
+      </div>
+    `;
+  }));
+  
+  container.innerHTML = html.join('');
+}
+
+/* Products */
+async function loadItems() {
+  if (!selectedProject) return;
+  
+  const searchTerm = (el('productSearch')?.value || '').trim().toLowerCase();
+  
+  const { data, error } = await sb.from('product_items')
+    .select('*')
+    .eq('project_id', selectedProject.id)
+    .order('created_at', { ascending: false });
+    
+  if (error) return;
+  
+  // Filter by search term
+  let filteredData = data || [];
+  if (searchTerm) {
+    filteredData = filteredData.filter(item => {
+      const searchableText = [
+        item.trade_name,
+        item.common_name,
+        item.reg_no,
+        item.receipt_no
+      ].filter(Boolean).join(' ').toLowerCase();
+      return searchableText.includes(searchTerm);
+    });
+  }
+  
+  const container = el('items');
+  
+  if (filteredData.length === 0) {
+    if (searchTerm) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-text">ไม่พบรายการที่ค้นหา</div></div>';
+    } else {
+      container.innerHTML = '<div class="empty-state"><div class="empty-text">ยังไม่มีรายการผลิตภัณฑ์</div></div>';
+    }
+    return;
+  }
+  
+  container.innerHTML = filteredData.map(item => `
+    <div class="product-item">
+      <div class="product-header">
+        <div class="product-names">
+          <h3>${esc(item.trade_name || 'ไม่ระบุชื่อการค้า')}</h3>
+          <div class="product-common">${esc(item.common_name || 'ไม่ระบุชื่อสามัญ')}</div>
+        </div>
+        ${item.blocker ? '<div class="blocker-badge">⚠️ มีปัญหา</div>' : ''}
+      </div>
+      
+      <div class="product-fields">
+        <div class="field-item">
+          <div class="field-label">ทะเบียน</div>
+          <div class="field-value">${esc(item.reg_no || '-')}</div>
+        </div>
+        <div class="field-item">
+          <div class="field-label">เลขรับ</div>
+          <div class="field-value">${esc(item.receipt_no || '-')}</div>
+        </div>
+        <div class="field-item">
+          <div class="field-label">สถานะ</div>
+          <div class="field-value">
+            <span class="status-badge status-${item.status_step}">
+              ${getStatusText(item.status_step)}
+            </span>
           </div>
-          <div id="tbl-${p.id}" class="section"></div>
         </div>
-
-        <div class="section">
-          <h4>ไทม์ไลน์ขั้นตอน</h4>
-          <div id="tl-${p.id}" class="list"></div>
-        </div>
-
-        <div class="section">
-          <h4>เอกสารแนบ</h4>
-          <div id="dc-${p.id}" class="list"></div>
-        </div>
-
-        <div class="section">
-          <h4>ข้อความจากทีมงาน</h4>
-          <div id="mg-${p.id}" class="list"></div>
+        <div class="field-item">
+          <div class="field-label">วันที่ยื่น</div>
+          <div class="field-value">${item.submitted_at || '-'}</div>
         </div>
       </div>
-    `;
-    // toggle
-    acc.querySelector('.acc-h').onclick = async ()=>{
-      acc.classList.toggle('open');
-      if(acc.classList.contains('open')){
-        await Promise.all([
-          loadItems(p.id),
-          loadTimeline(p.id),
-          loadDocs(p.id),
-          loadMessages(p.id)
-        ]);
-        // bind filters for items
-        const kw = el(`s-${p.id}-kw`);
-        const st = el(`s-${p.id}-st`);
-        const bk = el(`s-${p.id}-blk`);
-        [kw,st,bk].forEach(n=>n && (n.oninput = ()=>loadItems(p.id)));
-      }
+      
+      ${item.client_note ? `
+        <div class="field-item" style="margin-top: 12px;">
+          <div class="field-label">หมายเหตุ</div>
+          <div class="field-value">${esc(item.client_note)}</div>
+        </div>
+      ` : ''}
+      
+      ${item.blocker && item.blocker_note ? `
+        <div class="field-item" style="margin-top: 12px; background: #fee; border-color: #fcc;">
+          <div class="field-label" style="color: #ef4444;">⚠️ รายละเอียดปัญหา</div>
+          <div class="field-value" style="color: #ef4444;">${esc(item.blocker_note)}</div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+/* Init */
+document.addEventListener('DOMContentLoaded', async () => {
+  el('btnSignIn').onclick = signIn;
+  el('btnSignOut').onclick = signOut;
+  
+  el('email').onkeypress = e => e.key === 'Enter' && signIn();
+  el('password').onkeypress = e => e.key === 'Enter' && signIn();
+  
+  // Product search with debounce
+  let searchTimeout;
+  const productSearchInput = el('productSearch');
+  if (productSearchInput) {
+    productSearchInput.oninput = () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        if (selectedProject) loadItems();
+      }, 300);
     };
-    box.appendChild(acc);
   }
-}
-
-/* ===== Items (read-only list with filters) ===== */
-async function loadItems(projectId){
-  const kw = (el(`s-${projectId}-kw`)?.value||'').toLowerCase();
-  const st = (el(`s-${projectId}-st`)?.value||'');
-  const bk = !!(el(`s-${projectId}-blk`)?.checked);
-  const msg = el(`s-${projectId}-msg`);
-  const tblBox = el(`tbl-${projectId}`);
-  msg.textContent = 'กำลังโหลด…'; tblBox.innerHTML = '';
-
-  try{
-    const { data, error } = await sb
-      .from('product_items')
-      .select('id,trade_name,common_name,reg_no,receipt_no,status_step,admin_note,client_note,blocker,blocker_note,updated_at')
-      .eq('project_id', projectId)
-      .order('created_at',{ascending:false});
-    if(error) throw error;
-    let rows = data || [];
-
-    if(kw){
-      rows = rows.filter(x=>{
-        const s = [x.trade_name,x.common_name,x.reg_no,x.receipt_no,x.admin_note,x.client_note,x.blocker_note].filter(Boolean).join(' ').toLowerCase();
-        return s.includes(kw);
-      });
-    }
-    if(st) rows = rows.filter(x => (x.status_step||'') === st);
-    if(bk) rows = rows.filter(x => x.blocker);
-
-    if(!rows.length){
-      tblBox.innerHTML = `<div class="empty">— ไม่พบรายการ —</div>`;
-      msg.textContent = '';
-      return;
-    }
-
-    const html = `
-      <table>
-        <thead>
-          <tr>
-            <th>ชื่อการค้า</th>
-            <th>ชื่อสามัญ</th>
-            <th>ทะเบียน</th>
-            <th>เลขรับ</th>
-            <th>สถานะ</th>
-            <th>ปัญหา</th>
-            <th>หมายเหตุ (ลูกค้าเห็น)</th>
-            <th>อัปเดตล่าสุด</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(x=>`
-            <tr>
-              <td>${escapeHtml(x.trade_name||'-')}</td>
-              <td>${escapeHtml(x.common_name||'-')}</td>
-              <td>${escapeHtml(x.reg_no||'-')}</td>
-              <td>${escapeHtml(x.receipt_no||'-')}</td>
-              <td>${statusChip(x.status_step||'')}</td>
-              <td>${x.blocker ? ('มี' + (x.blocker_note? ' — '+escapeHtml(x.blocker_note):'')) : 'ไม่มี'}</td>
-              <td>${escapeHtml(x.client_note||'-')}</td>
-              <td>${fmtDate(x.updated_at)||'-'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-    tblBox.innerHTML = html;
-    msg.textContent = `รวม ${rows.length} รายการ`;
-  }catch(e){
-    console.error(e);
-    msg.textContent = 'โหลดรายการไม่ได้';
-  }
-}
-
-/* ===== Timeline (read-only) ===== */
-async function loadTimeline(projectId){
-  const box = el(`tl-${projectId}`); box.innerHTML = '';
-  try{
-    const { data, error } = await sb
-      .from('timeline')
-      .select('id,step,note,created_at')
-      .eq('project_id', projectId)
-      .order('created_at',{ascending:false});
-    if(error) throw error;
-    if(!data || !data.length){
-      box.innerHTML = `<div class="empty">— ยังไม่มีไทม์ไลน์ —</div>`;
-      return;
-    }
-    for(const r of data){
-      const div = document.createElement('div'); div.className='item';
-      div.innerHTML = `
-        <div class="row" style="justify-content:space-between">
-          <div><strong>${escapeHtml(r.step||'-')}</strong></div>
-          <div class="muted">${fmtDate(r.created_at)}</div>
-        </div>
-        ${r.note? `<div class="muted">${escapeHtml(r.note)}</div>`:''}
-      `;
-      box.appendChild(div);
-    }
-  }catch(e){
-    console.error(e);
-    box.innerHTML = `<div class="empty">โหลดไทม์ไลน์ไม่ได้</div>`;
-  }
-}
-
-/* ===== Docs (read-only with Drive/PDF preview) ===== */
-async function loadDocs(projectId){
-  const box = el(`dc-${projectId}`); box.innerHTML = '';
-  try{
-    const { data, error } = await sb
-      .from('documents')
-      .select('id,label,file_path,created_at,public_url,url_override')
-      .eq('project_id', projectId)
-      .order('created_at',{ascending:false});
-    if(error) throw error;
-
-    if(!data || !data.length){
-      box.innerHTML = `<div class="empty">— ยังไม่มีเอกสารแนบ —</div>`;
-      return;
-    }
-
-    for(const d of data){
-      const card = document.createElement('div'); card.className='item';
-      let preview = '';
-      // รองรับ 2 กรณี: อัปโหลดใน Supabase Storage หรือใส่ลิงก์ Drive/PDF (url_override)
-      if(d.url_override && isDriveLink(d.url_override)){
-        const prev = toDrivePreview(d.url_override);
-        preview = `
-          <div class="muted">ไฟล์: <a class="link" href="${escapeHtml(d.url_override)}" target="_blank">เปิดในแท็บใหม่</a></div>
-          <iframe src="${prev}" style="width:100%;height:360px;border:1px solid var(--border);border-radius:10px;background:#000" allow="autoplay"></iframe>
-        `;
-      }else if(d.url_override){
-        // ลิงก์ภายนอกทั่วไป (PDF/เว็บไซต์)
-        preview = `<div class="muted">ไฟล์: <a class="link" href="${escapeHtml(d.url_override)}" target="_blank">${escapeHtml(d.url_override)}</a></div>`;
-      }else if(d.file_path){
-        // ไฟล์ใน Storage (สร้างลิงก์ชั่วคราว)
-        try{
-          const { data: signed } = await sb.storage.from('docs').createSignedUrl(d.file_path, 60*10);
-          const link = signed?.signedUrl || '#';
-          const isPdf = /\.pdf($|\?)/i.test(d.file_path);
-          preview = `
-            <div class="muted">ไฟล์: <a class="link" href="${link}" target="_blank">เปิดไฟล์</a></div>
-            ${ isPdf ? `<iframe src="${link}" style="width:100%;height:360px;border:1px solid var(--border);border-radius:10px;background:#000"></iframe>` : '' }
-          `;
-        }catch(e){
-          preview = `<div class="muted">ไฟล์: เปิดลิงก์ไม่ได้</div>`;
-        }
-      }
-
-      card.innerHTML = `
-        <div class="row" style="justify-content:space-between">
-          <div><strong>${escapeHtml(d.label||'ไฟล์แนบ')}</strong></div>
-          <div class="muted">${fmtDate(d.created_at)}</div>
-        </div>
-        ${preview}
-      `;
-      box.appendChild(card);
-    }
-  }catch(e){
-    console.error(e);
-    box.innerHTML = `<div class="empty">โหลดเอกสารไม่ได้</div>`;
-  }
-}
-
-/* ===== Messages (read-only) ===== */
-async function loadMessages(projectId){
-  const box = el(`mg-${projectId}`); box.innerHTML = '';
-  try{
-    const { data, error } = await sb
-      .from('messages')
-      .select('id,body,by_role,created_at')
-      .eq('project_id', projectId)
-      .order('created_at',{ascending:false});
-    if(error) throw error;
-    if(!data || !data.length){
-      box.innerHTML = `<div class="empty">— ยังไม่มีข้อความ —</div>`;
-      return;
-    }
-    for(const m of data){
-      const card = document.createElement('div'); card.className='item';
-      const role = m.by_role || 'staff';
-      card.innerHTML = `
-        <div class="row" style="justify-content:space-between">
-          <div><strong>[${escapeHtml(role)}]</strong> ${escapeHtml(m.body||'')}</div>
-          <div class="muted">${fmtDate(m.created_at)}</div>
-        </div>
-      `;
-      box.appendChild(card);
-    }
-  }catch(e){
-    console.error(e);
-    box.innerHTML = `<div class="empty">โหลดข้อความไม่ได้</div>`;
-  }
-}
+  
+  sb.auth.onAuthStateChange(async () => {
+    await checkAuth();
+  });
+  
+  await checkAuth();
+  
+  // Realtime
+  sb.channel('realtime-client')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
+      if (currentCompanyId) loadProjects();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'timeline' }, () => {
+      if (selectedProject) loadTimeline();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+      if (selectedProject) loadMessages();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
+      if (selectedProject) loadDocs();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'product_items' }, () => {
+      if (selectedProject) loadItems();
+    })
+    .subscribe();
+});
 </script>
+
 </body>
 </html>
