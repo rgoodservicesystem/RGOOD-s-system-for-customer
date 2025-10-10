@@ -83,8 +83,19 @@
 const SUPABASE_URL = "https://phwigdhupzunbkywgxiq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBod2lnZGh1cHp1bmJreXdneGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTk2NjgsImV4cCI6MjA3NTU5NTY2OH0.5mWxBvX_VTZIpUOJiOvNAj-Vh1XEH4SNvbpk3YGuOEA";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const $ = id => document.getElementById(id);
+
+/* แปลงวันที่เป็น พ.ศ. */
+function fmtDateTH(d){
+  if(!d) return '-';
+  const t = new Date(d);
+  if(isNaN(t)) return '-';
+  const year = t.getFullYear() + 543;
+  const monthNames = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+                      "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  return `${t.getDate()} ${monthNames[t.getMonth()]} ${year}`;
+}
+
 const STAGES = [
   ['received','รับเรื่องแล้ว'],
   ['doc_check','ตรวจเอกสารเบื้องต้น'],
@@ -95,29 +106,14 @@ const STAGES = [
 ];
 const stageLabel = v => (STAGES.find(s=>s[0]===v)?.[1] || '-');
 
-/* ===== แสดงวันที่แบบ พ.ศ. ===== */
-function fmtDateTH(d){
-  if(!d) return '-';
-  const t = new Date(d);
-  if(isNaN(t)) return '-';
-  const year = t.getFullYear() + 543;
-  const monthNames = [
-    "มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
-    "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"
-  ];
-  return `${t.getDate()} ${monthNames[t.getMonth()]} ${year}`;
-}
-
-/* ตรวจเช็กว่าขาดอะไร */
 function buildChecklist(r){
-  const missing=[];
-  if(!r.registration_no) missing.push('ขาดทะเบียน');
-  if(!r.license_no) missing.push('ขาดใบอนุญาต');
-  if(!r.expiry_date) missing.push('ยังไม่ใส่วันที่ขึ้นทะเบียน');
-  if(!r.stage) missing.push('ยังไม่เลือกขั้นตอน');
-
-  if(missing.length===0) return `<span class="check-ok">ครบถ้วน ✓</span>`;
-  return `<span class="check-warn">${missing.join(' • ')}</span>`;
+  const miss=[];
+  if(!r.registration_no) miss.push('ขาดทะเบียน');
+  if(!r.license_no) miss.push('ขาดใบอนุญาต');
+  if(!r.expiry_date) miss.push('ยังไม่ใส่วันที่ขึ้นทะเบียน');
+  if(!r.stage) miss.push('ยังไม่เลือกขั้นตอน');
+  return miss.length===0 ? `<span class="check-ok">ครบถ้วน ✓</span>`
+                         : `<span class="check-warn">${miss.join(' • ')}</span>`;
 }
 
 $('searchBtn').addEventListener('click', loadData);
@@ -125,47 +121,37 @@ $('custCodeInput').addEventListener('keydown', e => { if(e.key==='Enter') loadDa
 
 async function loadData(){
   const code = $('custCodeInput').value.trim();
-  if(!code) return $('msg').textContent = '⚠️ กรุณากรอกรหัสลูกค้าก่อนค้นหา';
-
-  $('msg').textContent = '⏳ กำลังโหลดข้อมูล...';
-  $('tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted)">กำลังโหลด...</td></tr>`;
+  if(!code) return $('msg').textContent='⚠️ กรุณากรอกรหัสลูกค้าก่อนค้นหา';
+  $('msg').textContent='⏳ กำลังโหลดข้อมูล...';
+  $('tbody').innerHTML=`<tr><td colspan="7" style="color:var(--muted)">กำลังโหลด...</td></tr>`;
 
   try{
-    // ดึงชื่อบริษัทจากรหัสลูกค้า
-    const { data: comp, error: err1 } = await sb.from('companies')
-      .select('code')
-      .ilike('customer_code', code)
-      .maybeSingle();
-    if(err1) throw err1;
-    if(!comp){
-      $('msg').textContent = '❌ ไม่พบบริษัทที่ตรงกับรหัสนี้';
-      $('tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted)">ไม่พบบริษัท</td></tr>`;
+    // เรียก RPC เพื่อดึงชื่อบริษัท
+    const nameRes = await sb.rpc('get_company_name_by_code', { p_plain_code: code });
+    if(nameRes.error || !nameRes.data){
+      $('msg').textContent = '❌ ไม่พบข้อมูลรหัสนี้ หรือยังไม่เปิดใช้งาน';
+      $('tbody').innerHTML=`<tr><td colspan="7" style="color:var(--muted)">ไม่พบข้อมูล</td></tr>`;
       return;
     }
+    const company = nameRes.data;
+    $('msg').textContent=`✅ แสดงข้อมูลของบริษัท ${company}`;
 
-    const company = comp.code;
-
-    const { data, error } = await sb.from('product_registrations')
-      .select('*')
-      .eq('company_code', company);
-    if(error) throw error;
-
-    if(!data || data.length===0){
-      $('msg').textContent = `ℹ️ ไม่พบข้อมูลของบริษัท ${company}`;
-      $('tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted)">ไม่พบข้อมูลการขึ้นทะเบียน</td></tr>`;
-      return;
-    }
-
-    $('msg').textContent = `✅ แสดงข้อมูลของบริษัท ${company}`;
-    renderTable(data);
+    // เรียก RPC เพื่อดึงรายการสินค้าของบริษัท
+    const res = await sb.rpc('get_company_portal', { p_plain_code: code });
+    if(res.error){ throw res.error; }
+    renderTable(res.data || []);
   }catch(err){
+    console.error(err);
     $('msg').textContent = '⚠️ เกิดข้อผิดพลาด: ' + (err?.message||err);
   }
 }
 
-/* ===== วาดตาราง ===== */
 function renderTable(rows){
-  const tb = $('tbody');
+  const tb=$('tbody');
+  if(!rows.length){
+    tb.innerHTML=`<tr><td colspan="7" style="color:var(--muted)">ไม่พบข้อมูลการขึ้นทะเบียน</td></tr>`;
+    return;
+  }
   tb.innerHTML = rows.map(r=>`
     <tr>
       <td>${r.brand_name||'-'}</td>
@@ -175,9 +161,9 @@ function renderTable(rows){
       <td>${r.note||'-'}</td>
       <td>${r.custom_status||'-'}</td>
       <td>${buildChecklist(r)}</td>
-    </tr>
-  `).join('');
+    </tr>`).join('');
 }
 </script>
+
 </body>
 </html>
