@@ -1,98 +1,90 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Customer Portal (รหัสลูกค้า)</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Customer Portal — ติดตามการขึ้นทะเบียน</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{--bg:#0f172a;--card:rgba(30,41,59,.86);--mut:#94a3b8;--ink:#e2e8f0;--border:rgba(148,163,184,.25);--accent:#22d3ee;--accent2:#60a5fa;--radius:16px}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:"Prompt",ui-sans-serif; color:var(--ink); background:
-    radial-gradient(900px 540px at 10% -10%, #0ea5a520 0%, transparent 60%),
-    radial-gradient(800px 480px at 110% 0%, #38bdf820 0%, transparent 60%),
-    var(--bg);}
-  .wrap{max-width:960px;margin:30px auto;padding:0 16px}
-  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:0 8px 28px rgba(0,0,0,.25); margin-bottom:16px}
-  input,button{padding:12px; border-radius:12px; border:1px solid var(--border); background:#0b1220; color:var(--ink); font-size:15px}
-  .btn{cursor:pointer; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#0b1220; font-weight:700; border:none}
-  .row{display:flex;gap:10px;flex-wrap:wrap; align-items:center}
-  table{width:100%; border-collapse:collapse; margin-top:12px}
-  th,td{padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top}
-  th{color:#93c5fd}
-  .mut{color:var(--mut)}
-  .badge{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;display:inline-block}
-  .ok{color:#10b981;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.4)}
-  .warn{color:#f59e0b;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4)}
-  .exp{color:#ef4444;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4)}
-  mark{background:#fde68a55; padding:0 2px; border-radius:4px}
-  .spacer{flex:1}
 
-  /* ====== สเต็ปเปอร์ + หมายเหตุใต้แถว ====== */
-  .note-row td{background:rgba(2,6,23,.35)}
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 6px}
-  .step{display:flex;gap:8px;align-items:center;font-size:13px;color:#cbd5e1}
-  .dot{width:10px;height:10px;border-radius:999px;background:#334155;border:2px solid #334155}
-  .done .dot{background:#10b981;border-color:#10b981}
-  .current .dot{background:var(--accent);border-color:var(--accent)}
-  .note{font-size:13px;color:#cbd5e1;white-space:pre-wrap}
-  .note-label{opacity:.8;margin-right:6px}
+<style>
+  :root{
+    --bg:#f6fbff; --ink:#0f172a; --muted:#64748b; --card:#ffffff; --border:#e6eef5;
+    --accent:#0ea5a5; --accent-2:#60a5fa;
+    --ok:#0f766e;   --ok-bg:#ecfdf5;
+    --warn:#92400e; --warn-bg:#fff7ed;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:"Prompt",ui-sans-serif,system-ui; color:var(--ink); background:
+    radial-gradient(1200px 600px at 10% -10%, #e6f7ff 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 0%, #e8fff6 0%, transparent 60%),
+    var(--bg);}
+  header{padding:20px 16px; background:linear-gradient(180deg,#f0fbff,#eaf7ff); border-bottom:1px solid var(--border);}
+  .brand{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;font-weight:700;font-size:20px}
+  .logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));}
+  .container{max-width:1100px;margin:20px auto; padding:0 16px 28px;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 4px 20px rgba(10,30,60,.06); padding:18px; margin-bottom:16px;}
+  label{display:block; margin:6px 0 8px; color:var(--muted); font-size:14px;}
+  select, input, button{
+    padding:11px 12px; font-size:15px; border:1px solid var(--border); border-radius:10px; outline:none; background:white;
+  }
+  .btn{cursor:pointer}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:white; border:none}
+  table{width:100%; border-collapse:collapse; background:white; border-radius:12px; overflow:hidden}
+  th,td{padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top}
+  th{background:linear-gradient(180deg,#f7fbff,#f2f8ff); color:#0b3a4f; font-weight:600;}
+  .hint{color:var(--muted); font-size:13px}
+  .check-ok{ color:#065f46; background:#ecfdf5; border:1px solid #a7f3d0; padding:4px 10px; border-radius:10px; display:inline-block; font-size:12px; font-weight:600}
+  .check-warn{ color:#92400e; background:#fff7ed; border:1px solid #fde68a; padding:4px 10px; border-radius:10px; display:inline-block; font-size:12px; font-weight:600}
 </style>
 </head>
+
 <body>
-<div class="wrap">
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>Customer Portal — ติดตามการขึ้นทะเบียน</div>
+  </div>
+</header>
+
+<div class="container">
   <div class="card">
-    <h2 style="margin:0 0 10px">เข้าสู่พอร์ทัลลูกค้า</h2>
-    <p class="mut" style="margin:0 0 12px">กรอกรหัสที่ได้รับจากเจ้าหน้าที่ (ไม่ต้องใช้อีเมล)</p>
-    <div class="row">
-      <input id="code" placeholder="ใส่รหัสลูกค้า เช่น RG-1234" style="min-width:260px">
-      <button class="btn" id="enterBtn">เข้าดูข้อมูล</button>
+    <label><strong>🔍 ค้นหาข้อมูลของท่าน</strong></label>
+    <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;">
+      <input id="custCodeInput" placeholder="กรอกรหัสลูกค้า เช่น RG-1234" style="flex:1;min-width:260px">
+      <button id="searchBtn" class="btn btn-primary">ค้นหา</button>
     </div>
-    <div id="err" class="mut" style="color:#fca5a5;margin-top:8px"></div>
+    <div id="msg" class="hint" style="margin-top:8px"></div>
   </div>
 
-  <div class="card" id="dataCard" style="display:none">
-    <div class="row" style="justify-content:space-between">
-      <div>
-        <div class="mut">บริษัทของคุณ</div>
-        <div id="companyName" style="font-weight:700;font-size:18px">—</div>
-      </div>
-      <div class="spacer"></div>
-      <input id="q" placeholder="พิมพ์ค้นหา ชื่อการค้า / ชื่อสามัญ ..." style="min-width:240px">
-      <button id="clearBtn" class="btn" style="background:#0b1220;color:#cbd5e1;border:1px solid var(--border)">ล้าง</button>
-      <button class="btn" id="refreshBtn">รีเฟรช</button>
-    </div>
-
-    <div class="mut" id="count" style="margin-top:8px">—</div>
-
-    <table>
+  <div class="card" style="overflow:auto;">
+    <table id="dataTable">
       <thead>
         <tr>
-          <th>บริษัท</th>
           <th>ชื่อการค้า</th>
           <th>ชื่อสามัญ/สูตร</th>
-          <th>ทะเบียน</th>
-          <th>ใบอนุญาต</th>
-          <th>หมดอายุเดิม</th>
+          <th>วันที่ขึ้นทะเบียน</th>
+          <th>ขั้นตอน</th>
+          <th>หมายเหตุ</th>
           <th>สถานะ</th>
+          <th>ตรวจเช็ก</th>
         </tr>
       </thead>
-      <tbody id="tbody"><tr><td colspan="7" class="mut">—</td></tr></tbody>
+      <tbody id="tbody">
+        <tr><td colspan="7" style="color:var(--muted)">กรุณากรอกรหัสลูกค้าของท่านเพื่อดูข้อมูล</td></tr>
+      </tbody>
     </table>
   </div>
 </div>
 
 <script>
-/* ===== Supabase config ===== */
 const SUPABASE_URL = "https://phwigdhupzunbkywgxiq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBod2lnZGh1cHp1bmJreXdneGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTk2NjgsImV4cCI6MjA3NTU5NTY2OH0.5mWxBvX_VTZIpUOJiOvNAj-Vh1XEH4SNvbpk3YGuOEA";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = id => document.getElementById(id);
-const WARNING_DAYS = 90;
-
-/* ===== ขั้นตอนงาน (ต้องให้ RPC คืนฟิลด์ stage, note มาด้วย) ===== */
 const STAGES = [
   ['received','รับเรื่องแล้ว'],
   ['doc_check','ตรวจเอกสารเบื้องต้น'],
@@ -101,153 +93,79 @@ const STAGES = [
   ['approved','อนุมัติแล้ว'],
   ['rejected','ตีกลับ/แก้ไข']
 ];
-const stageLabel = v => (STAGES.find(s=>s[0]===v)?.[1] || 'ยังไม่ระบุ');
-const stageIndex = v => Math.max(0, STAGES.findIndex(s=>s[0]===v));
+const stageLabel = v => (STAGES.find(s=>s[0]===v)?.[1] || '-');
 
 function fmtDate(d){
   if(!d) return '-';
-  const t=new Date(d);
-  return isNaN(t)?'-':t.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-}
-function badge(expiry, renewed){
-  if (renewed) return `<span class="badge ok">ดำเนินการต่อแล้ว</span>`;
-  const eff = expiry ? new Date(expiry) : null;
-  if(!eff || isNaN(eff)) return `<span class="badge ok">ปกติ</span>`;
-  const diff = Math.ceil((eff - new Date())/86400000);
-  if(diff < 0) return `<span class="badge exp">หมดอายุ</span>`;
-  if(diff <= WARNING_DAYS) return `<span class="badge warn">เหลือ ${diff} วัน</span>`;
-  return `<span class="badge ok">ปกติ</span>`;
+  const t = new Date(d); if(isNaN(t)) return '-';
+  return t.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 }
 
-/* ===== Search / Render ===== */
-let CURRENT_CODE = '';
-let FULL_ROWS = [];
-let FILTERED = [];
+/* ตรวจเช็กว่าขาดอะไร */
+function buildChecklist(r){
+  const missing=[];
+  if(!r.registration_no) missing.push('ขาดทะเบียน');
+  if(!r.license_no) missing.push('ขาดใบอนุญาต');
+  if(!r.expiry_date) missing.push('ยังไม่ใส่วันที่ขึ้นทะเบียน');
+  if(!r.stage) missing.push('ยังไม่เลือกขั้นตอน');
 
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-function highlight(text, q){
-  if(!q) return escapeHtml(text||'-');
-  const s = String(text||''); const i = s.toLowerCase().indexOf(q.toLowerCase());
-  if(i === -1) return escapeHtml(s||'-');
-  return `${escapeHtml(s.slice(0,i))}<mark>${escapeHtml(s.slice(i,i+q.length))}</mark>${escapeHtml(s.slice(i+q.length))}`;
-}
-function stepperHtml(stage){
-  const idx = stageIndex(stage);
-  return `
-    <div class="steps">
-      ${STAGES.map((s,i)=>`
-        <div class="step ${i<idx?'done': i===idx?'current':''}">
-          <div class="dot"></div><div>${s[1]}</div>
-        </div>`).join('')}
-    </div>
-  `;
+  if(missing.length===0) return `<span class="check-ok">ครบถ้วน ✓</span>`;
+  return `<span class="check-warn">${missing.join(' • ')}</span>`;
 }
 
-function render(q=''){
+$('searchBtn').addEventListener('click', loadData);
+$('custCodeInput').addEventListener('keydown', e => { if(e.key==='Enter') loadData(); });
+
+async function loadData(){
+  const code = $('custCodeInput').value.trim();
+  if(!code) return $('msg').textContent = '⚠️ กรุณากรอกรหัสลูกค้าก่อนค้นหา';
+
+  $('msg').textContent = '⏳ กำลังโหลดข้อมูล...';
+  $('tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted)">กำลังโหลด...</td></tr>`;
+
+  try{
+    // ดึงชื่อบริษัทจากรหัสลูกค้า
+    const { data: comp, error: err1 } = await sb.from('companies')
+      .select('code')
+      .ilike('customer_code', code)
+      .maybeSingle();
+    if(err1) throw err1;
+    if(!comp){ $('msg').textContent = '❌ ไม่พบบริษัทที่ตรงกับรหัสนี้'; $('tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted)">ไม่พบบริษัท</td></tr>`; return; }
+
+    const company = comp.code;
+
+    const { data, error } = await sb.from('product_registrations')
+      .select('*')
+      .eq('company_code', company);
+    if(error) throw error;
+
+    if(!data || data.length===0){
+      $('msg').textContent = `ℹ️ ไม่พบข้อมูลของบริษัท ${company}`;
+      $('tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted)">ไม่พบข้อมูลการขึ้นทะเบียน</td></tr>`;
+      return;
+    }
+
+    $('msg').textContent = `✅ แสดงข้อมูลของบริษัท ${company}`;
+    renderTable(data);
+  }catch(err){
+    $('msg').textContent = '⚠️ เกิดข้อผิดพลาด: ' + (err?.message||err);
+  }
+}
+
+function renderTable(rows){
   const tb = $('tbody');
-  const rows = FILTERED;
-  if(rows.length === 0){
-    tb.innerHTML = `<tr><td colspan="7" class="mut">ไม่พบรายการที่ตรงกับ “${escapeHtml(q)}”</td></tr>`;
-  }else{
-    tb.innerHTML = rows.map(r=>`
-      <!-- แถวหลัก -->
-      <tr>
-        <td>${escapeHtml(r.company_name||'-')}</td>
-        <td>${highlight(r.brand_name, q)}</td>
-        <td>${highlight(r.common_label, q)}</td>
-        <td>${escapeHtml(r.registration_no||'-')}</td>
-        <td>${escapeHtml(r.license_no||'-')}</td>
-        <td>${fmtDate(r.expiry_date)}</td>
-        <td>${badge(r.expiry_date, r.renewed_until)}</td>
-      </tr>
-      <!-- แถวหมายเหตุ + สเต็ปเปอร์ -->
-      <tr class="note-row">
-        <td colspan="7">
-          ${stepperHtml(r.stage)}
-          <div class="note"><span class="note-label">หมายเหตุ:</span>${escapeHtml(r.note || '— ไม่มีหมายเหตุ —')}</div>
-        </td>
-      </tr>
-    `).join('');
-  }
-  $('count').textContent = `แสดง ${rows.length.toLocaleString('th-TH')} รายการ (ทั้งหมด ${FULL_ROWS.length.toLocaleString('th-TH')})`;
+  tb.innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.brand_name||'-'}</td>
+      <td>${r.common_label||'-'}</td>
+      <td>${fmtDate(r.expiry_date)}</td>
+      <td>${stageLabel(r.stage)}</td>
+      <td>${r.note||'-'}</td>
+      <td>${r.custom_status||'-'}</td>
+      <td>${buildChecklist(r)}</td>
+    </tr>
+  `).join('');
 }
-
-function applyFilter(){
-  const raw = $('q').value.trim();
-  const q = raw.toLowerCase();
-  if(!q){
-    FILTERED = [...FULL_ROWS];
-  }else{
-    FILTERED = FULL_ROWS.filter(r=>{
-      const brand  = (r.brand_name   ||'').toLowerCase();
-      const common = (r.common_label ||'').toLowerCase();
-      const note   = (r.note         ||'').toLowerCase();
-      return brand.includes(q) || common.includes(q) || note.includes(q);
-    });
-  }
-  render(raw);
-}
-
-/* ===== Data load by code ===== */
-async function loadCompanyByCode(){
-  if(!CURRENT_CODE) return;
-
-  const codeNorm = CURRENT_CODE.trim().toUpperCase();
-  const nameRes = await sb.rpc('get_company_name_by_code', { p_plain_code: codeNorm });
-  if(nameRes.error || !nameRes.data){
-    $('err').textContent = nameRes.error?.message || 'รหัสไม่ถูกต้องหรือถูกปิดใช้งาน';
-    $('dataCard').style.display = 'none';
-    return;
-  }
-  $('companyName').textContent = nameRes.data;
-
-  const res = await sb.rpc('get_company_portal', { p_plain_code: codeNorm });
-  if(res.error){
-    $('err').textContent = res.error.message;
-    $('dataCard').style.display='none';
-    return;
-  }
-
-  // ✅ คาดหวังว่า RPC คืนฟิลด์: stage, note (ถ้าไม่มีให้ backend เติม หรือจะ map ค่าเริ่มต้นด้านล่าง)
-  FULL_ROWS = (res.data || []).map(r=>({
-    ...r,
-    stage: r.stage || 'received',
-    note: r.note || ''
-  }));
-
-  $('err').textContent = '';
-  $('dataCard').style.display = 'block';
-
-  const qs = new URLSearchParams(location.search);
-  const initQ = qs.get('q') || '';
-  $('q').value = initQ;
-  applyFilter();
-}
-
-/* ===== Events ===== */
-$('enterBtn').addEventListener('click', async ()=>{
-  const code = $('code').value.trim().toUpperCase();
-  if(!code){ $('err').textContent = 'กรุณาใส่รหัสลูกค้า'; return; }
-  CURRENT_CODE = code;
-  await loadCompanyByCode();
-});
-$('code').addEventListener('keydown', e=>{
-  if(e.key==='Enter') $('enterBtn').click();
-});
-$('refreshBtn').addEventListener('click', loadCompanyByCode);
-$('q').addEventListener('input', applyFilter);
-$('clearBtn').addEventListener('click', ()=>{ $('q').value=''; applyFilter(); });
-
-/* ===== Auto-fill จาก URL ===== */
-document.addEventListener('DOMContentLoaded', ()=>{
-  const params = new URLSearchParams(location.search);
-  const code = params.get('code');
-  if(code){
-    $('code').value = code;
-    CURRENT_CODE = code.trim().toUpperCase();
-    loadCompanyByCode();
-  }
-});
 </script>
 </body>
 </html>
