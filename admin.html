@@ -47,12 +47,8 @@
   .hint{color:var(--muted); font-size:13px}
   .spacer{flex:1}
   mark{background:#fde68a80; padding:0 2px; border-radius:4px}
-
-  /* inline edit */
   td.editable { cursor: text; }
   td.editing { background: #fffbe6; }
-
-  /* ตรวจเช็ก */
   .check-ok{ color:#065f46; background:#ecfdf5; border:1px solid #a7f3d0; padding:4px 10px; border-radius:10px; display:inline-block; font-size:12px; font-weight:600}
   .check-warn{ color:#92400e; background:#fff7ed; border:1px solid #fde68a; padding:4px 10px; border-radius:10px; display:inline-block; font-size:12px; font-weight:600}
 </style>
@@ -93,11 +89,14 @@
         <label class="hint" style="display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="replaceMode"> แทนที่ข้อมูลทั้งหมดของบริษัทนี้
         </label>
+        <label class="hint" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="exportBE"> ส่งออกวันที่แบบ พ.ศ.
+        </label>
       </div>
       <div class="hint" style="margin-top:8px">
-        เทมเพลตรองรับคอลัมน์: “ชื่อการค้า”, “ชื่อสามัญ/สูตร”, “ทะเบียน”, “ใบอนุญาต”, 
-        “วันที่ขึ้นทะเบียน (YYYY-MM-DD)”, “ขั้นตอน (stage)”, “หมายเหตุ (note)”
-        <br/>*ใช้คอลัมน์เดิมในฐาน: <code>expiry_date</code> = วันที่ขึ้นทะเบียน
+        เทมเพลตรองรับคอลัมน์: “ชื่อการค้า/brand_name”, “ชื่อสามัญ/สูตร/common_label”, “ทะเบียน/registration_no”, “ใบอนุญาต/license_no”,
+        “วันที่ขึ้นทะเบียน (YYYY-MM-DD)” → <code>expiry_date</code>, “ขั้นตอน (stage)”, “หมายเหตุ (note)”
+        <br/>* ใช้คอลัมน์เดิมในฐาน: <code>expiry_date</code> = วันที่ขึ้นทะเบียน (ไม่แตะ SQL เดิม)
       </div>
     </div>
 
@@ -127,7 +126,6 @@
       <table>
         <thead>
           <tr>
-            <th style="width:38px"><input type="checkbox" id="chkAllVisible" disabled></th>
             <th>ลำดับ</th>
             <th>บริษัท</th>
             <th>ชื่อการค้า</th>
@@ -137,13 +135,12 @@
             <th>วันที่ขึ้นทะเบียน</th>
             <th>ขั้นตอน</th>
             <th>หมายเหตุ</th>
-            <th>สถานะ (พิมพ์เอง)</th>
+            <th>สถานะ</th>
             <th>ตรวจเช็ก</th>
-            <th>จัดการ</th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr><td colspan="13" style="color:var(--muted)">กรุณาเลือกบริษัทด้านบน</td></tr>
+          <tr><td colspan="11" style="color:var(--muted)">กรุณาเลือกบริษัทด้านบน</td></tr>
         </tbody>
       </table>
     </div>
@@ -160,7 +157,6 @@ const $ = id => document.getElementById(id);
 let currentCompany = '';
 let cachedRows = [];
 let filteredRows = [];
-const selectedIds = new Set();
 
 const STAGES = [
   ['received','รับเรื่องแล้ว'],
@@ -172,11 +168,17 @@ const STAGES = [
 ];
 const stageLabel = v => (STAGES.find(s=>s[0]===v)?.[1] || '-');
 
-function fmtDate(d){
+/* ===== แสดงวันที่แบบ พ.ศ. (ผลลัพธ์) ===== */
+function fmtDateTH(d){
   if(!d) return '-';
-  const t = new Date(d); if(isNaN(t)) return '-';
-  return t.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const t = new Date(d);
+  if(isNaN(t)) return '-';
+  const year = t.getFullYear() + 543;
+  const monthNames = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+                      "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  return `${t.getDate()} ${monthNames[t.getMonth()]} ${year}`;
 }
+/* ===== สำหรับบันทึก/เทียบค่า (เก็บ ค.ศ. ไว้เหมือนเดิม) ===== */
 function toISO(d){ if(!d) return ''; const t=new Date(d); if(isNaN(t)) return ''; return t.toISOString().slice(0,10); }
 function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 function escapeRegExp(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\\\$&'); }
@@ -195,11 +197,7 @@ function buildChecklist(r){
   if(!r.license_no) missing.push('ขาดใบอนุญาต');
   if(!r.expiry_date) missing.push('ยังไม่ใส่วันที่ขึ้นทะเบียน');
   if(!r.stage) missing.push('ยังไม่เลือกขั้นตอน');
-  // custom_status เป็นทางเลือก (ไม่บังคับ) แต่ถ้าอยากบังคับ ให้เปิดบรรทัดข้างล่าง:
-  // if(!r.custom_status) missing.push('ยังไม่ใส่สถานะ');
-
-  if(missing.length === 0) return `<span class="check-ok">ครบถ้วน ✓</span>`;
-  return `<span class="check-warn">${missing.join(' • ')}</span>`;
+  return missing.length === 0 ? `<span class="check-ok">ครบถ้วน ✓</span>` : `<span class="check-warn">${missing.join(' • ')}</span>`;
 }
 
 /* ========= Auth ========= */
@@ -235,65 +233,47 @@ function applyAdminFilter(){
 function renderTable(q=''){
   const tb = $('tbody');
   if(!filteredRows.length){
-    tb.innerHTML = `<tr><td colspan="13" style="color:var(--muted)">ไม่พบรายการที่ตรงกับ “${escapeHtml(q)}”</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="11" style="color:var(--muted)">ไม่พบรายการที่ตรงกับ “${escapeHtml(q)}”</td></tr>`;
     $('adminCount').textContent = ''; return;
   }
   const tokens = tokenize(q);
   tb.innerHTML = filteredRows.map((r,i)=>`
     <tr>
-      <td><input type="checkbox" class="rowchk" data-id="${r.id}" ${selectedIds.has(r.id)?'checked':''} disabled></td>
       <td>${i+1}</td>
       <td>${highlightTokens(r.company_code||'-', tokens)}</td>
-
       <td class="editable" data-id="${r.id}" data-field="brand_name">${highlightTokens(r.brand_name||'', tokens)}</td>
       <td class="editable" data-id="${r.id}" data-field="common_label" style="min-width:240px">${highlightTokens(r.common_label||'', tokens)}</td>
       <td class="editable" data-id="${r.id}" data-field="registration_no">${highlightTokens(r.registration_no||'', tokens)}</td>
       <td class="editable" data-id="${r.id}" data-field="license_no">${highlightTokens(r.license_no||'', tokens)}</td>
-
-      <td class="editable" data-id="${r.id}" data-field="expiry_date">${r.expiry_date? toISO(r.expiry_date): ''}</td>
-      <td class="editable" data-id="${r.id}" data-field="stage" data-type="select">${stageLabel(r.stage)}</td>
+      <!-- แสดง พ.ศ. แต่เวลาแก้จะใช้ input type="date" -->
+      <td class="editable" data-id="${r.id}" data-field="expiry_date" data-type="date" data-display="th">${r.expiry_date? fmtDateTH(r.expiry_date): '-'}</td>
+      <td class="editable" data-id="${r.id}" data-field="stage" data-type="select">${stageLabel(r.stage)||'-'}</td>
       <td class="editable" data-id="${r.id}" data-field="note" style="min-width:240px">${highlightTokens(r.note||'', tokens)}</td>
-
       <td class="editable" data-id="${r.id}" data-field="custom_status">${highlightTokens(r.custom_status||'', tokens)}</td>
       <td>${buildChecklist(r)}</td>
-
-      <td style="white-space:nowrap">
-        <button class="btn btn-danger btn-small" onclick="delDoc('${r.id}')">ลบ</button>
-      </td>
     </tr>
   `).join('');
 
   $('adminCount').textContent =
     `แสดง ${filteredRows.length.toLocaleString('th-TH')} / ทั้งหมด ${cachedRows.length.toLocaleString('th-TH')}`;
-
-  document.querySelectorAll('.rowchk').forEach(chk=>{
-    chk.addEventListener('change', (e)=>{
-      const id = e.target.dataset.id;
-      if(e.target.checked) selectedIds.add(id); else selectedIds.delete(id);
-      $('adminCount').textContent =
-        `แสดง ${filteredRows.length.toLocaleString('th-TH')} / ทั้งหมด ${cachedRows.length.toLocaleString('th-TH')}`;
-    });
-  });
 }
 
 /* ========= Load docs ========= */
 async function loadDocs(code){
-  currentCompany = code; selectedIds.clear();
+  currentCompany = code;
   if(!code){
-    $('tbody').innerHTML = `<tr><td colspan="13" style="color:var(--muted)">กรุณาเลือกบริษัท</td></tr>`;
+    $('tbody').innerHTML = `<tr><td colspan="11" style="color:var(--muted)">กรุณาเลือกบริษัท</td></tr>`;
     $('adminCount').textContent = '';
     return;
   }
-
   const {data, error} = await sb.from('product_registrations').select('*').eq('company_code', code);
-  if(error){ $('tbody').innerHTML=`<tr><td colspan="13">${error.message}</td></tr>`; $('adminCount').textContent=''; return; }
-
+  if(error){ $('tbody').innerHTML=`<tr><td colspan="11">${error.message}</td></tr>`; $('adminCount').textContent=''; return; }
   cachedRows = (data||[]).map(r=>({ ...r }));
   filteredRows = [...cachedRows];
   renderTable($('adminSearch').value || '');
 }
 
-/* ========= Add / Update / Delete single ========= */
+/* ========= Add / Update ========= */
 $('addForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentCompany) return alert('โปรดเลือกบริษัทก่อนเพิ่มข้อมูล');
@@ -304,7 +284,7 @@ $('addForm').addEventListener('submit', async (e)=>{
     common_label: $('common_label').value.trim(),
     registration_no: $('registration_no').value.trim() || null,
     license_no: $('license_no').value.trim() || null,
-    // ใช้ expiry_date เป็นวันที่ขึ้นทะเบียน (ไม่แตะ SQL)
+    // ใช้ expiry_date เป็น "วันที่ขึ้นทะเบียน" (เก็บเป็น ค.ศ.)
     expiry_date: $('register_date').value || null
   };
   if(!payload.brand_name || !payload.common_label) return alert('กรอก "ชื่อการค้า" และ "ชื่อสามัญ/สูตร" ให้ครบ');
@@ -315,31 +295,118 @@ $('addForm').addEventListener('submit', async (e)=>{
   loadDocs(currentCompany);
 });
 
-async function delDoc(id){
-  if(!confirm('ลบรายการนี้?')) return;
-  const {error} = await sb.from('product_registrations').delete().eq('id', id);
-  if(error) return alert(error.message);
-  loadDocs(currentCompany);
-}
+/* ========= Inline Edit (รองรับ stage / note / custom_status / expiry_date) ========= */
+(function initInlineEdit(){
+  const tb = $('tbody');
+  tb.addEventListener('dblclick', (e)=>{
+    const td = e.target.closest('td.editable'); if(!td) return;
+    if(td.classList.contains('editing')) return;
+
+    const id = td.getAttribute('data-id');
+    const field = td.getAttribute('data-field');
+    const dtype = td.getAttribute('data-type') || 'text';
+    const oldDisplayTH = td.textContent;
+    const oldRaw = (function(){
+      // แปลงค่าที่แสดง (พ.ศ.) → ISO เพื่อใส่ใน input ถ้าเป็น date
+      if(dtype==='date'){
+        // ถ้าตารางแสดง '-', ให้เป็น '' ใน input
+        const row = cachedRows.find(x=>x.id===id);
+        return row?.expiry_date ? toISO(row.expiry_date) : '';
+      }
+      return td.textContent;
+    })();
+
+    td.classList.add('editing');
+    let input;
+
+    if(dtype === 'date'){
+      input = document.createElement('input');
+      input.type = 'date';
+      input.value = oldRaw || '';
+    }else if(dtype === 'select' && field === 'stage'){
+      input = document.createElement('select');
+      STAGES.forEach(([v,l])=>{
+        const o=document.createElement('option'); o.value=v; o.textContent=l;
+        if(l===td.textContent || v===td.textContent) o.selected=true;
+        input.appendChild(o);
+      });
+    }else if(field==='note'){
+      input = document.createElement('textarea'); input.rows=3; input.value = td.textContent;
+    }else{
+      input = document.createElement('input'); input.type='text'; input.value = td.textContent;
+    }
+
+    input.style.width = '100%'; input.style.boxSizing='border-box';
+    td.innerHTML=''; td.appendChild(input); input.focus(); input.select?.();
+
+    const finish = async (commit)=>{
+      const val = (input.value??'');
+      td.classList.remove('editing');
+      if(!commit){ td.textContent = oldDisplayTH; return; }
+
+      const payload = {};
+      try{
+        if(field === 'brand_name' || field === 'common_label'){
+          if(!val.trim()){ td.textContent = oldDisplayTH; return alert('ต้องมีค่า'); }
+          payload[field] = val.trim();
+        }else if(field === 'registration_no' || field === 'license_no'){
+          payload[field] = val.trim() || null;
+        }else if(field === 'expiry_date'){ // บันทึกเป็น ISO (ค.ศ.) แต่แสดง พ.ศ.
+          const raw = val.trim();
+          if(raw && !/^\d{4}-\d{2}-\d{2}$/.test(raw)){ td.textContent = oldDisplayTH; return alert('วันที่ไม่ถูกต้อง (YYYY-MM-DD)'); }
+          payload[field] = raw || null;
+        }else if(field === 'note'){
+          payload[field] = val.trim() || null;
+        }else if(field === 'stage'){
+          payload[field] = val || null;
+          payload['stage_updated_at'] = new Date().toISOString(); // ถ้ามีคอลัมน์นี้ใน DB จะอัปเดตได้
+        }else if(field === 'custom_status'){
+          payload[field] = val.trim() || null;
+        }
+
+        const { error } = await sb.from('product_registrations').update(payload).eq('id', id);
+        if(error){
+          // เผื่อ custom_status ไม่มีคอลัมน์
+          if(field==='custom_status'){
+            alert('ยังไม่มีคอลัมน์ custom_status ในฐานข้อมูล\n\nรัน SQL นี้ใน Supabase → SQL Editor:\n\nALTER TABLE public.product_registrations\nADD COLUMN IF NOT EXISTS custom_status text;');
+          }else{
+            alert(error.message);
+          }
+          td.textContent = oldDisplayTH;
+          return;
+        }
+
+        // อัปเดต cache และ re-render
+        const idx=cachedRows.findIndex(x=>x.id===id);
+        if(idx>-1){ cachedRows[idx] = { ...cachedRows[idx], ...payload }; }
+        applyAdminFilter(); // re-render ทั้งตาราง (แสดงเป็น พ.ศ. อัตโนมัติ)
+        toast('บันทึกแล้ว ✓');
+      }catch(err){
+        td.textContent = oldDisplayTH;
+        alert(err?.message || err);
+      }
+    };
+
+    input.addEventListener('keydown', ev=>{
+      if(ev.key==='Enter' && field!=='note'){ ev.preventDefault(); finish(true); }
+      if(ev.key==='Escape'){ ev.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', ()=> finish(true));
+  });
+})();
 
 /* ========= ลูกค้ารหัส (RPC เดิม) ========= */
 function toast(msg, ok=true){ $('msg').textContent = msg; $('msg').style.color = ok ? '#065f46' : '#b91c1c'; setTimeout(()=>{$('msg').textContent='';}, 4000); }
 function genCode(){ const L='ABCDEFGHJKLMNPQRSTUVWXYZ', D='23456789', pick=(s,n)=>Array.from({length:n},()=>s[Math.floor(Math.random()*s.length)]).join(''); return `${pick(L,2)}-${pick(D,4)}`; }
 $('genCodeBtn').addEventListener('click', ()=>{ $('cust_code').value = genCode(); });
 $('copyCodeBtn').addEventListener('click', async ()=>{
-  const v = $('cust_code').value.trim();
-  if(!v) return alert('ยังไม่มีรหัสให้คัดลอก');
-  await navigator.clipboard.writeText(v);
-  toast('คัดลอกรหัสแล้ว ✓');
+  const v = $('cust_code').value.trim(); if(!v) return alert('ยังไม่มีรหัสให้คัดลอก');
+  await navigator.clipboard.writeText(v); toast('คัดลอกรหัสแล้ว ✓');
 });
 $('setCodeBtn').addEventListener('click', async ()=>{
   if(!currentCompany) return alert('โปรดเลือกบริษัทก่อน');
-  const code = $('cust_code').value.trim();
-  if(!code) return alert('กรุณากรอกรหัสลูกค้า');
-  const {error} = await sb.rpc('set_customer_code', {
-    p_company_code: currentCompany,
-    p_plain_code: code
-  });
+  const code = $('cust_code').value.trim(); if(!code) return alert('กรุณากรอกรหัสลูกค้า');
+  const {error} = await sb.rpc('set_customer_code', { p_company_code: currentCompany, p_plain_code: code });
   if(error){ alert(error.message); return; }
   toast(`ตั้ง/เปลี่ยนรหัสลูกค้าสำหรับ "${currentCompany}" เรียบร้อย ✓`);
 });
@@ -361,7 +428,7 @@ function downloadTemplate(){
   XLSX.writeFile(wb, 'template_register.xlsx');
 }
 
-/* แปลงวันที่รองรับ พ.ศ. และ Excel serial */
+/* แปลงวันที่รองรับ พ.ศ. และ Excel serial → ISO (ค.ศ.) */
 function normalizeDate(v) {
   const pad = n => String(n).padStart(2, "0");
   const toIso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
@@ -377,23 +444,24 @@ function normalizeDate(v) {
   if (typeof v === "string") {
     const s = v.trim(); if (!s) return null;
 
+    // YYYY-MM-DD
     let m = s.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/);
     if (m) { let y=+m[1], mo=+m[2], d=+m[3]; if (y>=2400 && y<2600) y-=543; return toIso(y,mo,d); }
 
+    // DD/MM/YYYY หรือ DD-MM-YYYY
     m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
     if (m) { let d=+m[1], mo=+m[2], y=+m[3]; if (y>=2400 && y<2600) y-=543; return toIso(y,mo,d); }
 
+    // yyyymmdd
     m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
     if (m) { let y=+m[1], mo=+m[2], d=+m[3]; if (y>=2400 && y<2600) y-=543; return toIso(y,mo,d); }
   }
-
   return null;
 }
 
 async function importExcel(ev){
   if(!currentCompany) return alert('โปรดเลือกบริษัทก่อน');
-  const file = ev.target.files?.[0];
-  ev.target.value = ''; if(!file) return;
+  const file = ev.target.files?.[0]; ev.target.value = ''; if(!file) return;
 
   try{
     const ab = await file.arrayBuffer();
@@ -418,7 +486,7 @@ async function importExcel(ev){
       const regdt  = pick(r, ['วันที่ขึ้นทะเบียน','วันที่ขึ้นทะเบียน (yyyy-mm-dd)','register_date','expiry_date']);
       const stage  = pick(r, ['ขั้นตอน','stage']);
       const note   = pick(r, ['หมายเหตุ','note']);
-      // custom_status ไม่ใส่ใน insert เพื่อกัน error ถ้ายังไม่มีคอลัมน์
+
       const expiry_date = normalizeDate(regdt);
 
       return {
@@ -458,25 +526,24 @@ async function importExcel(ev){
 
 function exportExcel(){
   if(!currentCompany) return alert('โปรดเลือกบริษัทก่อน');
+  const asBE = $('exportBE').checked; // true = แสดงวันที่ พ.ศ. ในไฟล์
   const rows = cachedRows || [];
   const aoa = [
-    ['บริษัท','ชื่อการค้า','ชื่อสามัญ/สูตร','ทะเบียน','ใบอนุญาต','วันที่ขึ้นทะเบียน (YYYY-MM-DD)','ขั้นตอน','หมายเหตุ','สถานะ','ตรวจเช็ก']
+    ['บริษัท','ชื่อการค้า','ชื่อสามัญ/สูตร','ทะเบียน','ใบอนุญาต','วันที่ขึ้นทะเบียน', asBE?'(พ.ศ.)':'' , 'ขั้นตอน','หมายเหตุ','สถานะ','ตรวจเช็ก'].filter(Boolean)
   ];
   rows.forEach(r=>{
+    const dateDisplay = r.expiry_date ? (asBE ? fmtDateTH(r.expiry_date) : toISO(r.expiry_date)) : '';
     aoa.push([
       r.company_code || '',
       r.brand_name || '',
       r.common_label || '',
       r.registration_no || '',
       r.license_no || '',
-      r.expiry_date ? toISO(r.expiry_date) : '',
+      dateDisplay,
       stageLabel(r.stage || ''),
       r.note || '',
       r.custom_status || '',
-      // export ข้อความตรวจเช็กแปลงเป็น plain
-      (function(){
-        const div=document.createElement('div'); div.innerHTML=buildChecklist(r); return div.textContent || '';
-      })()
+      (function(){ const div=document.createElement('div'); div.innerHTML=buildChecklist(r); return div.textContent || ''; })()
     ]);
   });
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -485,124 +552,18 @@ function exportExcel(){
   XLSX.writeFile(wb, `register_${currentCompany.replace(/[\\/:*?"<>|]/g,'_')}.xlsx`);
 }
 
-/* ========= Inline Edit (รองรับ stage / note / custom_status / register_date) ========= */
-(function initInlineEdit(){
-  const tb = $('tbody');
-
-  tb.addEventListener('dblclick', (e)=>{
-    const td = e.target.closest('td.editable');
-    if(!td) return;
-
-    if(td.classList.contains('editing')) return;
-    const id = td.getAttribute('data-id');
-    const field = td.getAttribute('data-field');
-    const oldText = td.textContent;
-
-    td.classList.add('editing');
-
-    let input;
-    if(field === 'expiry_date'){ // วันที่ขึ้นทะเบียน
-      input = document.createElement('input');
-      input.type = 'date';
-      input.value = (oldText||'').trim();
-    }else if(field === 'stage'){
-      input = document.createElement('select');
-      STAGES.forEach(([v,l])=>{
-        const o=document.createElement('option'); o.value=v; o.textContent=l;
-        if(l===oldText || v===oldText) o.selected=true; input.appendChild(o);
-      });
-    }else if(field === 'note'){
-      input = document.createElement('textarea'); input.rows=3; input.value = oldText;
-    }else{
-      input = document.createElement('input'); input.type = 'text'; input.value = oldText;
-    }
-    input.style.width = '100%';
-    input.style.boxSizing = 'border-box';
-
-    td.innerHTML = '';
-    td.appendChild(input);
-    input.focus();
-    input.select?.();
-
-    const finish = async (commit)=>{
-      const val = input.value;
-      td.classList.remove('editing');
-
-      if(!commit){
-        td.textContent = oldText;
-        return;
-      }
-
-      const payload = {};
-      try{
-        if(field === 'brand_name' || field === 'common_label'){
-          if(!val.trim()){ td.textContent = oldText; return alert('ต้องมีค่า'); }
-          payload[field] = val.trim();
-        }else if(field === 'registration_no' || field === 'license_no'){
-          payload[field] = val.trim() || null;
-        }else if(field === 'expiry_date'){
-          const raw = val.trim();
-          if(raw){
-            if(!/^\d{4}-\d{2}-\d{2}$/.test(raw)){ td.textContent = oldText; return alert('วันที่ไม่ถูกต้อง (YYYY-MM-DD)'); }
-            payload[field] = raw; // ใช้ expiry_date เป็น "วันที่ขึ้นทะเบียน"
-          }else{
-            payload[field] = null;
-          }
-        }else if(field === 'note'){
-          payload[field] = val.trim() || null;
-        }else if(field === 'stage'){
-          payload[field] = val;
-          payload['stage_updated_at'] = new Date().toISOString(); // เผื่อมีคอลัมน์นี้
-        }else if(field === 'custom_status'){
-          payload[field] = val.trim() || null; // ถ้าไม่มีคอลัมน์นี้ใน DB การอัปเดตจะ error -> จับแจ้งเตือนให้
-        }
-
-        const { error } = await sb.from('product_registrations').update(payload).eq('id', id);
-        if(error){
-          // ถ้า error เพราะคอลัมน์ custom_status ไม่มี ให้แนะนำ SQL
-          if(field==='custom_status'){
-            alert('ยังไม่มีคอลัมน์ custom_status ในฐานข้อมูล\n\nรัน SQL นี้ใน Supabase → SQL Editor:\n\nALTER TABLE public.product_registrations\nADD COLUMN IF NOT EXISTS custom_status text;');
-          }else{
-            alert(error.message);
-          }
-          // ย้อนค่าเดิมคืนหน้าจอ
-          td.textContent = oldText;
-          return;
-        }
-
-        // update cache + re-render
-        const idx = cachedRows.findIndex(x=>x.id===id);
-        if(idx>-1){
-          cachedRows[idx] = { ...cachedRows[idx], ...payload };
-        }
-        applyAdminFilter(); // re-render
-        toast('บันทึกแล้ว ✓');
-      }catch(err){
-        td.textContent = oldText;
-        alert(err?.message || err);
-      }
-    };
-
-    input.addEventListener('keydown', (ev)=>{
-      if(ev.key === 'Enter' && field!=='note'){ ev.preventDefault(); finish(true); }
-      if(ev.key === 'Escape'){ ev.preventDefault(); finish(false); }
-    });
-    input.addEventListener('blur', ()=> finish(true));
-  });
-})();
-
 /* ========= Events ========= */
 $('companySelect').addEventListener('change', e=> e.target.value && loadDocs(e.target.value));
 $('adminSearch').addEventListener('input', applyAdminFilter);
 $('adminClearBtn').addEventListener('click', ()=>{ $('adminSearch').value=''; applyAdminFilter(); });
+$('tplBtn').addEventListener('click', downloadTemplate);
+$('impBtn').addEventListener('click', ()=> $('excelFile').click());
+$('expBtn').addEventListener('click', exportExcel);
 
 /* ========= Start ========= */
 document.addEventListener('DOMContentLoaded', async ()=>{
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) {
-    location.href = 'admin_login.html';
-    return;
-  }
+  if (!session) { location.href = 'admin_login.html'; return; }
   loadCompanies();
 });
 </script>
