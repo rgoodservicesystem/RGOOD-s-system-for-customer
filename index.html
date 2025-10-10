@@ -53,6 +53,13 @@
       <footer>© 2025 Company Portal — Powered by Supabase</footer>
     </div>
   </div>
+<script>
+if (location.pathname.endsWith('/') || location.pathname.endsWith('/index.html')) {
+  console.log("✅ Index page loaded correctly");
+} else {
+  location.href = './index.html';
+}
+</script>
 
   <script>
     // ------------ ตั้งค่า Supabase (ใช้ anon key) ------------
