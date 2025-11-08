@@ -246,23 +246,31 @@
     <script>
         function openLink(type) {
             // เพิ่ม animation เมื่อกดปุ่ม
-            event.target.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                event.target.style.transform = '';
-            }, 150);
+            // ต้องตรวจสอบว่า event.target มีอยู่จริงก่อน
+            if (event && event.target) {
+                event.target.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    event.target.style.transform = '';
+                }, 150);
+            }
+            
 
-            // ลิงก์ที่จะเปิด (สามารถเปลี่ยนได้ตามต้องการ)
+            // ลิงก์ที่จะเปิด (เปลี่ยนตามที่ลูกค้ากำหนด)
             const links = {
-                website: 'https://www.example.com',
-                tracking: 'https://www.example.com/tracking',
+                // *** แก้ไขลิงก์ 'website' เป็น URL ใหม่ตามที่ระบุ ***
+                website: 'https://serviceagriculture.github.io/R.Good-SERVICE-REGISTRATION/',
+                // *** สามารถเปลี่ยนลิงก์อื่นๆ ได้ตามต้องการ ***
+                tracking: 'https://www.example.com/tracking', 
                 contact: 'https://www.example.com/contact'
             };
 
-            // แสดง notification
-            alert('กำลังเชื่อมต่อไปยัง: ' + type);
+            // แสดง notification (ถ้าไม่ต้องการให้แสดง alert ให้ลบบรรทัดนี้ออก)
+            // alert('กำลังเชื่อมต่อไปยัง: ' + type);
             
-            // เปิดลิงก์ (ถ้าต้องการเปิดจริง ให้ uncomment บรรทัดด้านล่าง)
-            // window.open(links[type], '_blank');
+            // *** เปิดลิงก์ไปยังหน้าเว็บใหม่ (เปิดในแท็บใหม่) ***
+            if (links[type]) {
+                 window.open(links[type], '_blank');
+            }
         }
     </script>
 </body>
