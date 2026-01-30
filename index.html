@@ -399,6 +399,15 @@
                         </div>
                     </button>
                 </div>
+                <div class="menu-item">
+    <button class="menu-button" onclick="openLink('process')">
+        <span class="button-icon">⚙️</span>
+        <div class="button-text">
+            <span class="button-label">ติดตามสถานะขั้นตอนการดำเนินงาน</span>
+            <span class="button-sublabel">คลิ้กเพื่อดูรายละเอียดขั้นตอน</span>
+        </div>
+    </button>
+</div>
 
                 <div class="contact-info">
                     <div class="contact-item">
@@ -426,11 +435,12 @@
             }, 150);
 
             // Links
-            const links = {
-                website: 'https://serviceagriculture.github.io/R.Good-SERVICE-REGISTRATION/',
-                tracking: 'https://rgoodservicesystem.github.io/registration-for-customer/customer.html',
-                contact: 'https://rgoodservice.github.io/LOGIN-CUSTOMER/customer.html'
-            };
+           const links = {
+    website: 'https://serviceagriculture.github.io/R.Good-SERVICE-REGISTRATION/',
+    tracking: 'https://rgoodservicesystem.github.io/registration-for-customer/customer.html',
+    contact: 'https://rgoodservice.github.io/LOGIN-CUSTOMER/customer.html',
+    process: 'https://rgoodservicesystem.github.io/process-customer-by-R.good/customer.html' // ลิงก์ใหม่ที่เพิ่มเข้ามา
+};
 
             // Open link
             if (links[type]) {
