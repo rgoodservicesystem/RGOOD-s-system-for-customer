@@ -1,349 +1,1032 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>R.GOOD SERVICE - Premium Registration Solutions</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@100;300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --deep-green: #0D261F;
-            --soft-green: #1A3A31;
-            --gold-primary: #D4AF37;
-            --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #F5E0A3 50%, #B8952D 100%);
-            --glass: rgba(255, 255, 255, 0.95);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102d25">
+  <meta name="description" content="R.Good Service บริการขึ้นทะเบียนปุ๋ยและวัตถุอันตรายทางการเกษตร ตรวจสอบทะเบียน ใบอนุญาตผลิต และติดตามงานของคุณ">
+  <title>R.Good Service | ขึ้นทะเบียนไว อุ่นใจทุกขั้นตอน</title>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-        body {
-            font-family: 'Prompt', sans-serif;
-            background-color: var(--deep-green);
-            color: #fff;
-            overflow-x: hidden;
-            opacity: 0;
-            line-height: 1.6;
-        }
+  <style>
+    :root {
+      --green: #102d25;
+      --gold: #dcc58e;
+      --cream: #f8f9f5;
+      --ink: #19372c;
+      --muted: #637267;
+    }
 
-        /* --- Background Details --- */
-        .bg-pattern {
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4af37' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            z-index: 0;
-        }
+    * { box-sizing: border-box; }
 
-        .floating-orb {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            z-index: 1;
-            filter: blur(40px);
-            animation: float 15s infinite alternate;
-        }
+    html { scroll-behavior: smooth; }
 
-        /* --- Hero Layout --- */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 5%;
-            position: relative;
-            z-index: 10;
-        }
+    body {
+      margin: 0;
+      font-family: "Prompt", Tahoma, sans-serif;
+      color: var(--cream);
+      background: var(--green);
+      line-height: 1.7;
+    }
 
-        .hero-content {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 80px;
-            max-width: 1300px;
-            width: 100%;
-        }
+    a { color: inherit; }
 
-        /* --- Left Side: Typography & Details --- */
-        .hero-left {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
+    svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
 
-        .pre-title {
-            color: var(--gold-primary);
-            font-size: 14px;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            font-weight: 300;
-            margin-bottom: 15px;
-            display: block;
-        }
+    .svg-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
 
-        .company-title {
-            font-family: 'Playfair Display', serif; /* ฟอนต์หรูหราเฉพาะชื่อ */
-            font-size: clamp(45px, 6vw, 75px);
-            line-height: 1;
-            margin-bottom: 25px;
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    .page {
+      min-height: 100svh;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 8% 55%, #244b3b 0, transparent 55%),
+        linear-gradient(120deg, #15372d, #0c241e);
+    }
 
-        .tagline-box {
-            position: relative;
-            padding: 25px;
-            border-radius: 0 20px 20px 0;
-            background: rgba(255,255,255,0.03);
-            border-left: 5px solid var(--gold-primary);
-            margin-bottom: 40px;
-            max-width: 600px;
-        }
+    .page::before,
+    .page::after {
+      content: "";
+      position: absolute;
+      width: 650px;
+      height: 650px;
+      border: 1px solid rgba(220, 197, 142, .09);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: -1;
+    }
 
-        .tagline-box p {
-            font-size: 18px;
-            font-weight: 300;
-            color: rgba(255,255,255,0.9);
-        }
+    .page::before {
+      left: -470px;
+      top: 140px;
+      box-shadow:
+        0 0 0 80px rgba(220, 197, 142, .025),
+        0 0 0 160px rgba(220, 197, 142, .018);
+    }
 
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-        }
+    .page::after {
+      right: -500px;
+      bottom: -200px;
+      box-shadow: 0 0 0 90px rgba(220, 197, 142, .025);
+    }
 
-        .feature-card {
-            display: flex;
-            gap: 15px;
-            align-items: flex-start;
-        }
+    .container {
+      width: min(1180px, calc(100% - 80px));
+      margin-inline: auto;
+    }
 
-        .feature-card .dot {
-            width: 8px;
-            height: 8px;
-            background: var(--gold-primary);
-            border-radius: 50%;
-            margin-top: 10px;
-            box-shadow: 0 0 10px var(--gold-primary);
-        }
+    /* Header */
+    .site-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding: 28px 0;
+      border-bottom: 1px solid #ffffff14;
+    }
 
-        .feature-card h4 { font-size: 15px; color: #fff; }
-        .feature-card p { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 300; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
 
-        /* --- Right Side: Glass Card --- */
-        .hero-right {
-            background: var(--glass);
-            padding: 50px 40px;
-            border-radius: 40px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.2);
-            position: relative;
-        }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 43px;
+      height: 43px;
+      border: 1px solid #dcc58e70;
+      border-radius: 12px;
+      color: var(--gold);
+      font-family: Georgia, serif;
+      font-size: 21px;
+    }
 
-        .card-header { text-align: center; margin-bottom: 40px; }
-        .card-header h2 { color: var(--deep-green); font-size: 28px; margin-bottom: 5px; }
-        .card-header div { width: 50px; height: 3px; background: var(--gold-primary); margin: 15px auto; }
+    .brand-name {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+    }
 
-        .menu-btn {
-            width: 100%;
-            height: 75px;
-            margin-bottom: 18px;
-            border: none;
-            border-radius: 20px;
-            background: #fff;
-            border: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            padding: 0 25px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
-        }
+    .brand-caption {
+      display: block;
+      font-size: 10px;
+      font-weight: 300;
+      color: #b4c5bb;
+      letter-spacing: 1px;
+    }
 
-        /* Shine Effect on Hover */
-        .menu-btn::after {
-            content: '';
-            position: absolute;
-            top: -50%; left: -60%;
-            width: 20%; height: 200%;
-            background: rgba(212, 175, 55, 0.2);
-            transform: rotate(30deg);
-            transition: all 0.6s;
-        }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
 
-        .menu-btn:hover::after { left: 120%; }
+    .header-contact {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      font-size: 13px;
+      color: #e4eade;
+    }
 
-        .menu-btn:hover {
-            transform: scale(1.03);
-            border-color: var(--gold-primary);
-            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.15);
-        }
+    .header-contact svg {
+      width: 17px;
+      height: 17px;
+      color: var(--gold);
+    }
 
-        .btn-icon {
-            width: 45px; height: 45px;
-            background: #f0f4f3;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            margin-right: 20px;
-            transition: 0.3s;
-        }
+    /* Language selector */
+    .language-switch {
+      display: flex;
+      gap: 3px;
+      padding: 4px;
+      border: 1px solid #dcc58e40;
+      border-radius: 10px;
+    }
 
-        .menu-btn:hover .btn-icon { background: var(--gold-primary); color: #fff; }
+    .language-switch button {
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      color: #d9e4db;
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      min-width: 42px;
+      min-height: 34px;
+      padding: 6px 10px;
+    }
 
-        .btn-content { text-align: left; }
-        .btn-title { display: block; font-weight: 600; color: var(--deep-green); font-size: 16px; }
-        .btn-subtitle { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+    .language-switch button[aria-pressed="true"] {
+      background: var(--gold);
+      color: var(--green);
+      font-weight: 600;
+    }
 
-        .contact-footer {
-            margin-top: 30px;
-            padding-top: 25px;
-            border-top: 1px dashed #ddd;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+    .language-switch button:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
 
-        .contact-link {
-            text-decoration: none;
-            color: var(--soft-green);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 500;
-        }
+    /* Introduction */
+    main { padding: 66px 0 58px; }
 
-        /* Animations */
-        @keyframes float {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.06fr 1fr;
+      gap: 76px;
+      align-items: center;
+    }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .hero-content { grid-template-columns: 1fr; gap: 50px; text-align: center; }
-            .tagline-box { border-left: none; border-bottom: 5px solid var(--gold-primary); border-radius: 20px; margin: 0 auto 40px; }
-            .feature-grid { justify-items: center; }
-            .feature-card { text-align: left; }
-        }
-    </style>
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--gold);
+      font-size: 11px;
+      letter-spacing: 2.4px;
+      margin: 0 0 24px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      height: 1px;
+      width: 28px;
+      background: var(--gold);
+    }
+
+    h1 {
+      margin: 0 0 24px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(52px, 5.4vw, 76px);
+      font-weight: 400;
+      line-height: 1.03;
+      letter-spacing: -2px;
+    }
+
+    h1 span {
+      display: block;
+      color: var(--gold);
+      margin-top: 7px;
+    }
+
+    .slogan {
+      font-size: clamp(20px, 2vw, 25px);
+      font-weight: 500;
+      margin: 0 0 14px;
+      letter-spacing: -.5px;
+    }
+
+    .intro {
+      max-width: 440px;
+      color: #c1d0c6;
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.95;
+      margin: 0;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 23px 18px;
+      border-top: 1px solid #ffffff1c;
+      padding-top: 27px;
+      margin-top: 32px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .feature > svg {
+      color: var(--gold);
+      flex: 0 0 19px;
+      width: 19px;
+      height: 19px;
+      margin-top: 4px;
+    }
+
+    .feature strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .feature p {
+      font-size: 11px;
+      font-weight: 300;
+      color: #afc2b5;
+      margin: 3px 0 0;
+    }
+
+    /* Service panel */
+    .service-panel {
+      background: var(--cream);
+      color: var(--ink);
+      border: 1px solid #fff9;
+      border-radius: 26px;
+      padding: 30px;
+      box-shadow: 0 24px 70px #0003;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #7b795f;
+      font-weight: 500;
+      margin: 0 0 6px;
+    }
+
+    h2 {
+      font-size: 25px;
+      line-height: 1.4;
+      font-weight: 600;
+      margin: 0 0 7px;
+    }
+
+    .panel-intro {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 23px;
+    }
+
+    .services {
+      display: grid;
+      gap: 11px;
+    }
+
+    .service {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 17px 15px;
+      text-decoration: none;
+      background: #fff;
+      border: 1px solid #dfe6dc;
+      border-radius: 14px;
+      transition:
+        background .18s,
+        border-color .18s,
+        transform .18s,
+        box-shadow .18s;
+    }
+
+    .service:hover {
+      background: #f0f4ed;
+      border-color: #9aaf9c;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 14px #19372c09;
+    }
+
+    .icon-box {
+      display: grid;
+      place-items: center;
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      background: #edf2e9;
+      border-radius: 12px;
+      color: #315641;
+    }
+
+    .service-copy {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .service-title {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .service-description {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.65;
+    }
+
+    .arrow {
+      flex: 0 0 17px;
+      width: 17px;
+      height: 17px;
+      color: #81937f;
+    }
+
+    /* Contact */
+    .panel-contact {
+      border-top: 1px solid #dfe5d9;
+      margin-top: 23px;
+      padding-top: 19px;
+    }
+
+    .contact-heading {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+
+    .contact-links {
+      display: grid;
+      gap: 10px;
+    }
+
+    .contact-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      max-width: 100%;
+      font-size: 12px;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    .contact-link svg {
+      flex: 0 0 16px;
+      width: 16px;
+      height: 16px;
+      color: #788466;
+    }
+
+    .contact-link:hover,
+    .header-contact:hover {
+      color: #b8954c;
+    }
+
+    .new-tab-note {
+      font-size: 10px;
+      color: #788273;
+      margin: 16px 0 0;
+    }
+
+    .site-footer {
+      border-top: 1px solid #ffffff14;
+      padding: 19px 0 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #a4b8aa;
+      font-size: 10px;
+      font-weight: 300;
+    }
+
+    .site-footer p { margin: 0; }
+
+    a:focus-visible {
+      outline: 3px solid #b8954c;
+      outline-offset: 5px;
+      border-radius: 5px;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: -100px;
+      left: 16px;
+      z-index: 10;
+      background: var(--cream);
+      color: var(--ink);
+      padding: 10px 16px;
+      border-radius: 8px;
+    }
+
+    .skip-link:focus { top: 12px; }
+
+    html[lang="en"] .slogan {
+      font-size: 22px;
+      line-height: 1.5;
+      max-width: 440px;
+    }
+
+    html[lang="en"] .feature strong {
+      font-size: 12px;
+    }
+
+    /* Responsive */
+    @media (min-width: 1500px) {
+      main {
+        padding-top: 90px;
+        padding-bottom: 90px;
+      }
+    }
+
+    @media (max-width: 1050px) {
+      .hero { gap: 40px; }
+      .container { width: calc(100% - 56px); }
+      .service-panel { padding: 25px; }
+
+      .service {
+        gap: 10px;
+        padding: 15px 12px;
+      }
+
+      .service-title { font-size: 13px; }
+    }
+
+    @media (max-width: 800px) {
+      .container {
+        width: min(600px, calc(100% - 40px));
+      }
+
+      .site-header { padding: 20px 0; }
+
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 34px;
+      }
+
+      main { padding: 38px 0; }
+
+      .eyebrow {
+        margin-bottom: 18px;
+        font-size: 10px;
+      }
+
+      h1 { font-size: 58px; }
+      .intro { max-width: none; }
+
+      .features {
+        margin-top: 24px;
+        padding-top: 22px;
+        gap: 18px;
+      }
+
+      .service-panel { padding: 26px; }
+      .service-title { font-size: 14px; }
+      .service { padding: 17px 15px; }
+
+      .site-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .header-actions { gap: 10px; }
+      .header-actions .header-contact { display: none; }
+      html[lang="en"] .slogan { font-size: 21px; }
+    }
+
+    @media (max-width: 400px) {
+      .container { width: calc(100% - 32px); }
+
+      .brand { gap: 8px; }
+      .brand-name { font-size: 11px; }
+      .brand-caption { font-size: 8px; }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+
+      h1 { font-size: 51px; }
+      .slogan { font-size: 19px; }
+      .intro { font-size: 13px; }
+
+      .feature { gap: 7px; }
+      .feature strong { font-size: 12px; }
+      .feature p { font-size: 10px; }
+
+      .service-panel {
+        padding: 22px 16px;
+        border-radius: 21px;
+      }
+
+      .service {
+        padding: 14px 11px;
+        gap: 10px;
+      }
+
+      .icon-box {
+        flex-basis: 38px;
+        width: 38px;
+        height: 38px;
+      }
+
+      .service-title { font-size: 13px; }
+      .service-description { font-size: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .service { transition: none; }
+      .service:hover { transform: none; }
+    }
+  </style>
 </head>
+
 <body>
+  <a
+    class="skip-link"
+    href="#services"
+    data-th="ข้ามไปเลือกบริการ"
+    data-en="Skip to services"
+  >ข้ามไปเลือกบริการ</a>
 
-    <div class="bg-pattern"></div>
-    <div class="floating-orb" style="top: 10%; right: 5%;"></div>
-    <div class="floating-orb" style="bottom: 10%; left: 5%;"></div>
+  <!-- Shared SVG icons -->
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z"/>
+      </symbol>
 
-    <section class="hero">
-        <div class="hero-content">
-            
-            <div class="hero-left">
-                <span class="pre-title" id="entry-text">Premium Agricultural Solutions</span>
-                <h1 class="company-title">R.GOOD<br>SERVICE</h1>
-                
-                <div class="tagline-box">
-                    <p>“ยกระดับมาตรฐานการขึ้นทะเบียน มุ่งเน้นความถูกต้อง รวดเร็ว และเป็นที่ปรึกษาที่วางใจได้สำหรับธุรกิจเกษตรของคุณ”</p>
-                </div>
+      <symbol id="i-certificate" viewBox="0 0 24 24">
+        <path d="M13 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10l4 4v5M14 3v5h5M8 8h3M8 12h5M8 16h3"/>
+        <circle cx="18" cy="16" r="3"/>
+        <path d="m16 19-1 3 3-1 3 1-1-3"/>
+      </symbol>
 
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <div class="dot"></div>
-                        <div>
-                            <h4>ความเชี่ยวชาญกว่า 25 ปี</h4>
-                            <p>Experience over 25 years in sector.</p>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <div class="dot"></div>
-                        <div>
-                            <h4>สำเร็จแล้วกว่า 1,000 ทะเบียน</h4>
-                            <p>More than 1,000 successful registrations</p>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <div class="dot"></div>
-                        <div>
-                            <h4>ถูกต้องตามหลักกฎหมาย 100%</h4>
-                            <p>Full legal compliance & safety.</p>
-                        </div>
-                    </div>
-                    <div class="feature-card">
-                        <div class="dot"></div>
-                        <div>
-                            <h4>บริการครบวงจร</h4>
-                            <p>End-to-end registration service.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <symbol id="i-factory" viewBox="0 0 24 24">
+        <path d="M3 21V10l6 3V8l6 4V3h4l2 18ZM3 21h18M7 17h1m4 0h1m4 0h1"/>
+      </symbol>
 
-            <div class="hero-right">
-                <div class="card-header">
-                    <h2>Contact & Portal</h2>
-                    <p style="color: #888; font-size: 13px;">กรุณาเลือกบริการที่ท่านต้องการ</p>
-                    <div></div>
-                </div>
+      <symbol id="i-progress" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="16" height="17" rx="2"/>
+        <path d="M9 4V2h6v2M8 10h8M8 14h4m-4 4h3m3-1 2 2 4-5"/>
+      </symbol>
 
-                <button class="menu-btn" onclick="openLink('website')">
-                    <div class="btn-icon">🌐</div>
-                    <div class="btn-content">
-                        <span class="btn-title">หน้าแรกเว็บไซต์</span>
-                        <span class="btn-subtitle">Official Portal & Services</span>
-                    </div>
-                </button>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M5 12h14m-6-6 6 6-6 6"/>
+      </symbol>
 
-                <button class="menu-btn" onclick="openLink('tracking')">
-                    <div class="btn-icon">📋</div>
-                    <div class="btn-content">
-                        <span class="btn-title">ตรวจสอบใบสำคัญการขึ้นทะเบียน</span>
-                        <span class="btn-subtitle">Registration Certificate Verification</span>
-                    </div>
-                </button>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <path d="M8 3H4a1 1 0 0 0-1 1c0 10 7 17 17 17a1 1 0 0 0 1-1v-4l-5-2-2 3a13 13 0 0 1-7-7l3-2Z"/>
+      </symbol>
 
-                <button class="menu-btn" onclick="openLink('contact')">
-                    <div class="btn-icon">📅</div>
-                    <div class="btn-content">
-                        <span class="btn-title">ตรวจสอบใบอนุญาตผลิต</span>
-                        <span class="btn-subtitle">Agri-Hazardous License Check</span>
-                    </div>
-                </button>
+      <symbol id="i-mail" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="14" rx="2"/>
+        <path d="m3 6 9 7 9-7"/>
+      </symbol>
 
-                <button class="menu-btn" onclick="openLink('process')">
-                    <div class="btn-icon">⚙️</div>
-                    <div class="btn-content">
-                        <span class="btn-title">งานที่กำลังดำเนินการขึ้นทะเบียน</span>
-                        <span class="btn-subtitle">Registration In Progress</span>
-                    </div>
-                </button>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="m8 12 3 3 5-6"/>
+      </symbol>
+    </defs>
+  </svg>
 
-                <div class="contact-footer">
-                    <a href="tel:0843752399" class="contact-link">📞 084-375-2399</a>
-                    <a href="mailto:parungrung24@gmail.com" class="contact-link">📧 parungrung24@gmail.com</a>
-                </div>
-            </div>
+  <div class="page">
+    <div class="container">
 
+      <header class="site-header">
+        <a
+          class="brand"
+          href="#"
+          aria-label="R.Good Service หน้าแรก"
+          data-aria-th="R.Good Service หน้าแรก"
+          data-aria-en="R.Good Service home"
+        >
+          <span class="brand-mark" aria-hidden="true">RG</span>
+          <span class="brand-name">
+            R.GOOD SERVICE
+            <span class="brand-caption">AGRICULTURAL REGISTRATION</span>
+          </span>
+        </a>
+
+        <div class="header-actions">
+          <div
+            class="language-switch"
+            role="group"
+            aria-label="เลือกภาษา / Choose language"
+          >
+            <button
+              type="button"
+              data-language="th"
+              aria-pressed="true"
+              lang="th"
+            >ไทย</button>
+
+            <button
+              type="button"
+              data-language="en"
+              aria-pressed="false"
+              lang="en"
+            >EN</button>
+          </div>
+
+          <a class="header-contact" href="tel:0843752399">
+            <svg aria-hidden="true"><use href="#i-phone"/></svg>
+            084-375-2399
+          </a>
         </div>
-    </section>
+      </header>
 
-    <script>
-        function openLink(type) {
-            const links = {
-                website: 'https://serviceagriculture.github.io/R.Good-SERVICE-REGISTRATION/',
-                tracking: 'https://rgoodservicesystem.github.io/registration-for-customer/customer.html',
-                contact: 'https://rgoodservice.github.io/LOGIN-CUSTOMER/customer.html',
-                process: 'https://rgoodservicesystem.github.io/process-customer-by-R.good/customer.html'
-            };
-            if (links[type]) window.open(links[type], '_blank');
-        }
+      <main>
+        <div class="hero">
 
-        window.addEventListener('load', () => {
-            document.body.style.transition = 'opacity 1.2s ease-in';
-            document.body.style.opacity = '1';
+          <!-- Company introduction -->
+          <section aria-labelledby="company-title">
+            <p class="eyebrow">AGRICULTURAL REGISTRATION</p>
+
+            <h1 id="company-title">
+              R.GOOD
+              <span>SERVICE</span>
+            </h1>
+
+            <p
+              class="slogan"
+              data-th="ขึ้นทะเบียนไว อุ่นใจทุกขั้นตอน"
+              data-en="Registration made easy. Confidence at every step."
+            >ขึ้นทะเบียนไว อุ่นใจทุกขั้นตอน</p>
+
+            <p
+              class="intro"
+              data-th="บริการขึ้นทะเบียนปุ๋ยและวัตถุอันตรายทางการเกษตร&lt;br&gt;พร้อมดูแลเอกสาร ให้คำปรึกษา และติดตามงาน&lt;br&gt;เพื่อให้ทุกขั้นตอนของธุรกิจคุณเป็นเรื่องง่าย"
+              data-en="Fertilizer and agricultural hazardous substance registration services. We assist with documentation, provide guidance, and help you track progress at every step."
+            >
+              บริการขึ้นทะเบียนปุ๋ยและวัตถุอันตรายทางการเกษตร<br>
+              พร้อมดูแลเอกสาร ให้คำปรึกษา และติดตามงาน<br>
+              เพื่อให้ทุกขั้นตอนของธุรกิจคุณเป็นเรื่องง่าย
+            </p>
+
+            <div class="features">
+              <div class="feature">
+                <svg aria-hidden="true"><use href="#i-check"/></svg>
+                <div>
+                  <strong
+                    data-th="ให้คำปรึกษาด้านทะเบียน"
+                    data-en="Registration guidance"
+                  >ให้คำปรึกษาด้านทะเบียน</strong>
+                  <p
+                    data-th="วางแผนและเตรียมความพร้อม"
+                    data-en="Planning and preparation"
+                  >วางแผนและเตรียมความพร้อม</p>
+                </div>
+              </div>
+
+              <div class="feature">
+                <svg aria-hidden="true"><use href="#i-check"/></svg>
+                <div>
+                  <strong
+                    data-th="ใส่ใจความถูกต้อง"
+                    data-en="Attention to detail"
+                  >ใส่ใจความถูกต้อง</strong>
+                  <p
+                    data-th="ดูแลรายละเอียดของเอกสาร"
+                    data-en="Careful documentation support"
+                  >ดูแลรายละเอียดของเอกสาร</p>
+                </div>
+              </div>
+
+              <div class="feature">
+                <svg aria-hidden="true"><use href="#i-check"/></svg>
+                <div>
+                  <strong
+                    data-th="ติดตามงานสะดวก"
+                    data-en="Easy progress tracking"
+                  >ติดตามงานสะดวก</strong>
+                  <p
+                    data-th="ตรวจสอบผ่านระบบออนไลน์"
+                    data-en="Check your records online"
+                  >ตรวจสอบผ่านระบบออนไลน์</p>
+                </div>
+              </div>
+
+              <div class="feature">
+                <svg aria-hidden="true"><use href="#i-check"/></svg>
+                <div>
+                  <strong
+                    data-th="ดูแลอย่างเป็นระบบ"
+                    data-en="Organized support"
+                  >ดูแลอย่างเป็นระบบ</strong>
+                  <p
+                    data-th="ประสานงานในทุกขั้นตอน"
+                    data-en="Coordination at every step"
+                  >ประสานงานในทุกขั้นตอน</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Customer services -->
+          <section
+            class="service-panel"
+            id="services"
+            aria-labelledby="services-title"
+          >
+            <p class="panel-label">CUSTOMER SERVICES</p>
+
+            <h2
+              id="services-title"
+              data-th="เลือกบริการที่คุณต้องการ"
+              data-en="How can we help you?"
+            >เลือกบริการที่คุณต้องการ</h2>
+
+            <p
+              class="panel-intro"
+              data-th="ตรวจสอบข้อมูลและติดตามงานของคุณได้ที่นี่"
+              data-en="Access your records and track your registration progress."
+            >ตรวจสอบข้อมูลและติดตามงานของคุณได้ที่นี่</p>
+
+            <nav
+              class="services"
+              aria-label="ระบบบริการลูกค้า"
+              data-aria-th="ระบบบริการลูกค้า"
+              data-aria-en="Customer services"
+            >
+              <!-- Website -->
+              <a
+                class="service"
+                href="https://serviceagriculture.github.io/R.Good-SERVICE-REGISTRATION/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="icon-box">
+                  <svg aria-hidden="true"><use href="#i-globe"/></svg>
+                </span>
+
+                <span class="service-copy">
+                  <span
+                    class="service-title"
+                    data-th="เว็บไซต์ R.Good Service"
+                    data-en="R.Good Service website"
+                  >เว็บไซต์ R.Good Service</span>
+                  <span
+                    class="service-description"
+                    data-th="รู้จักเราและดูรายละเอียดบริการ"
+                    data-en="Learn about us and explore our services"
+                  >รู้จักเราและดูรายละเอียดบริการ</span>
+                </span>
+
+                <svg class="arrow" aria-hidden="true">
+                  <use href="#i-arrow"/>
+                </svg>
+              </a>
+
+              <!-- Registration certificates -->
+              <a
+                class="service"
+                href="https://rgoodservicesystem.github.io/registration-for-customer/customer.html"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="icon-box">
+                  <svg aria-hidden="true"><use href="#i-certificate"/></svg>
+                </span>
+
+                <span class="service-copy">
+                  <span
+                    class="service-title"
+                    data-th="ตรวจสอบใบสำคัญการขึ้นทะเบียน"
+                    data-en="Registration certificates"
+                  >ตรวจสอบใบสำคัญการขึ้นทะเบียน</span>
+                  <span
+                    class="service-description"
+                    data-th="ค้นหาข้อมูลทะเบียนของคุณ"
+                    data-en="View your registration certificate records"
+                  >ค้นหาข้อมูลทะเบียนของคุณ</span>
+                </span>
+
+                <svg class="arrow" aria-hidden="true">
+                  <use href="#i-arrow"/>
+                </svg>
+              </a>
+
+              <!-- Manufacturing licenses -->
+              <a
+                class="service"
+                href="https://rgoodservice.github.io/LOGIN-CUSTOMER/customer.html"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="icon-box">
+                  <svg aria-hidden="true"><use href="#i-factory"/></svg>
+                </span>
+
+                <span class="service-copy">
+                  <span
+                    class="service-title"
+                    data-th="ตรวจสอบใบอนุญาตผลิต"
+                    data-en="Manufacturing licenses"
+                  >ตรวจสอบใบอนุญาตผลิต</span>
+                  <span
+                    class="service-description"
+                    data-th="ค้นหาข้อมูลใบอนุญาตผลิตของคุณ"
+                    data-en="View your manufacturing license records"
+                  >ค้นหาข้อมูลใบอนุญาตผลิตของคุณ</span>
+                </span>
+
+                <svg class="arrow" aria-hidden="true">
+                  <use href="#i-arrow"/>
+                </svg>
+              </a>
+
+              <!-- Work in progress -->
+              <a
+                class="service"
+                href="https://rgoodservicesystem.github.io/process-customer-by-R.good/customer.html"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="icon-box">
+                  <svg aria-hidden="true"><use href="#i-progress"/></svg>
+                </span>
+
+                <span class="service-copy">
+                  <span
+                    class="service-title"
+                    data-th="ติดตามงานขึ้นทะเบียน"
+                    data-en="Track registration progress"
+                  >ติดตามงานขึ้นทะเบียน</span>
+                  <span
+                    class="service-description"
+                    data-th="ดูความคืบหน้าของงานที่กำลังดำเนินการ"
+                    data-en="Check the progress of your ongoing applications"
+                  >ดูความคืบหน้าของงานที่กำลังดำเนินการ</span>
+                </span>
+
+                <svg class="arrow" aria-hidden="true">
+                  <use href="#i-arrow"/>
+                </svg>
+              </a>
+            </nav>
+
+            <div class="panel-contact">
+              <p
+                class="contact-heading"
+                data-th="ต้องการสอบถามเพิ่มเติม ติดต่อเรา"
+                data-en="Need assistance? Contact us"
+              >ต้องการสอบถามเพิ่มเติม ติดต่อเรา</p>
+
+              <div class="contact-links">
+                <a class="contact-link" href="tel:0843752399">
+                  <svg aria-hidden="true"><use href="#i-phone"/></svg>
+                  <span>084-375-2399</span>
+                </a>
+
+                <a class="contact-link" href="mailto:parungrung24@gmail.com">
+                  <svg aria-hidden="true"><use href="#i-mail"/></svg>
+                  <span>parungrung24@gmail.com</span>
+                </a>
+              </div>
+            </div>
+
+            <p
+              class="new-tab-note"
+              data-th="ลิงก์บริการเปิดในแท็บใหม่"
+              data-en="Service links open in a new tab."
+            >ลิงก์บริการเปิดในแท็บใหม่</p>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <p>© R.Good Service. All rights reserved.</p>
+        <p
+          data-th="ขึ้นทะเบียนปุ๋ยและวัตถุอันตรายทางการเกษตร"
+          data-en="Fertilizer &amp; agricultural hazardous substance registration"
+        >ขึ้นทะเบียนปุ๋ยและวัตถุอันตรายทางการเกษตร</p>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const titles = {
+        th: 'R.Good Service | ขึ้นทะเบียนไว อุ่นใจทุกขั้นตอน',
+        en: 'R.Good Service | Agricultural Registration Services'
+      };
+
+      const descriptions = {
+        th: 'R.Good Service บริการขึ้นทะเบียนปุ๋ยและวัตถุอันตรายทางการเกษตร ตรวจสอบทะเบียน ใบอนุญาตผลิต และติดตามงานของคุณ',
+        en: 'R.Good Service offers fertilizer and agricultural hazardous substance registration services. View certificate and manufacturing license records, and track your applications.'
+      };
+
+      function setLanguage(language) {
+        const lang = language === 'en' ? 'en' : 'th';
+
+        document.documentElement.lang = lang;
+        document.title = titles[lang];
+        document.querySelector('meta[name="description"]').content =
+          descriptions[lang];
+
+        document.querySelectorAll('[data-th][data-en]').forEach(element => {
+          if (lang === 'th' && element.dataset.th.includes('<br>')) {
+            element.replaceChildren();
+
+            element.dataset.th.split('<br>').forEach((line, index) => {
+              if (index) {
+                element.append(document.createElement('br'));
+              }
+              element.append(document.createTextNode(line));
+            });
+          } else {
+            element.textContent = element.dataset[lang];
+          }
         });
-    </script>
+
+        document.querySelectorAll('[data-aria-th]').forEach(element => {
+          element.setAttribute(
+            'aria-label',
+            element.dataset[lang === 'en' ? 'ariaEn' : 'ariaTh']
+          );
+        });
+
+        document.querySelectorAll('[data-language]').forEach(button => {
+          button.setAttribute(
+            'aria-pressed',
+            String(button.dataset.language === lang)
+          );
+        });
+
+        try {
+          localStorage.setItem('rgood-language', lang);
+        } catch (_) {}
+      }
+
+      document.querySelectorAll('[data-language]').forEach(button => {
+        button.addEventListener('click', () => {
+          setLanguage(button.dataset.language);
+        });
+      });
+
+      let saved;
+
+      try {
+        saved = localStorage.getItem('rgood-language');
+      } catch (_) {}
+
+      const initial =
+        saved === 'th' || saved === 'en'
+          ? saved
+          : (navigator.language || 'th').toLowerCase().startsWith('th')
+            ? 'th'
+            : 'en';
+
+      setLanguage(initial);
+    })();
+  </script>
 </body>
 </html>
